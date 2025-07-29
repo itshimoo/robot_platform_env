@@ -20,7 +20,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 function runPythonCommand(command, args = []) {
     return new Promise((resolve, reject) => {
         const pythonPath = path.join(__dirname, '..', 'src');
-        const scriptPath = path.join(__dirname, '..', 'robotlab');
+        const scriptPath = path.join(__dirname, '..', 'rpe');
         
         const childProcess = spawn('python3', [scriptPath, command, ...args], {
             cwd: path.join(__dirname, '..'),
