@@ -1,0 +1,35 @@
+# Robot Platform Environment bash completion script
+
+_robotlab() {
+    local cur prev opts cmds
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    
+    # Available commands
+    cmds="build run stop status logs shell webgui config"
+    
+    # Available options
+    opts="--help --version"
+    
+    case "${prev}" in
+        *)
+            if [[ ${cur} == * ]] ; then
+                COMPREPLY=( $(compgen -W "${cmds} ${opts}" -- "${cur}") )
+            fi
+            ;;
+    esac
+    
+    return 0
+}
+
+# Complete for rpe (default command)
+complete -F _robotlab rpe
+
+# Complete for common custom command names
+complete -F _robotlab myrobot
+complete -F _robotlab rosbot
+complete -F _robotlab autobot
+complete -F _robotlab xi
+complete -F _robotlab drone
+complete -F _robotlab rover 

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RobotLab - Simple ROS Manager</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🤖 RobotLab</h1>
+            <p>Simple Docker-based ROS Environment Manager</p>
+        </header>
+
+        <main>
+            <!-- Control Buttons -->
+            <section class="controls">
+                <h2>Container Controls</h2>
+                <div class="button-group">
+                    <button onclick="buildContainer()" class="btn btn-primary">Build</button>
+                    <button onclick="runContainer()" class="btn btn-success">Run</button>
+                    <button onclick="stopContainer()" class="btn btn-danger">Stop</button>
+                </div>
+            </section>
+
+            <!-- Status -->
+            <section class="status">
+                <h2>Container Status</h2>
+                <div id="status" class="status-content">
+                    <p>Loading...</p>
+                </div>
+            </section>
+
+            <!-- Command Execution -->
+            <section class="command">
+                <h2>Execute Command</h2>
+                <div class="command-input">
+                    <input type="text" id="commandInput" placeholder="Enter command..." />
+                    <button onclick="executeCommand()" class="btn btn-primary">Execute</button>
+                </div>
+                <div id="output" class="output-content"></div>
+            </section>
+
+            <!-- Logs -->
+            <section class="logs">
+                <h2>Container Logs</h2>
+                <button onclick="loadLogs()" class="btn btn-secondary">Load Logs</button>
+                <div id="logs" class="logs-content"></div>
+            </section>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html> 
