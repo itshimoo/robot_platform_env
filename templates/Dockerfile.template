@@ -5,18 +5,16 @@ FROM ros:${ROS_DISTRO}-ros-core
 
 # Set environment variables
 ENV ROS_DISTRO=${ROS_DISTRO}
-ENV ROS_VERSION=${ROS_VERSION}
-ENV PYTHON_VERSION=${ROS_PYTHON_VERSION}
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Install system dependencies and development tools
 RUN apt-get update && apt-get install -y \
-    python${PYTHON_VERSION}-pip \
-    python${PYTHON_VERSION}-rosinstall \
-    python${PYTHON_VERSION}-rosinstall-generator \
-    python${PYTHON_VERSION}-wstool \
-    python${PYTHON_VERSION}-catkin-tools \
-    python${PYTHON_VERSION}-rosdep \
+    python3-pip \
+    python3-rosinstall \
+    python3-rosinstall-generator \
+    python3-wstool \
+    python3-catkin-tools \
+    python3-rosdep \
     build-essential \
     cmake \
     git \
@@ -45,8 +43,8 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python packages for development
-RUN pip${PYTHON_VERSION} install --upgrade pip && \
-    pip${PYTHON_VERSION} install \
+RUN pip3 install --upgrade pip && \
+    pip3 install \
     numpy \
     scipy \
     matplotlib \
