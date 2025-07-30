@@ -36,7 +36,7 @@ check_config_file() {
         print_warning "Configuration file '$config_file' not found!"
         echo ""
         echo "Creating default configuration file..."
-        cp robot.env.example "$config_file" 2>/dev/null || {
+        cp platform.env.example "$config_file" 2>/dev/null || {
             print_warning "No example config found. Creating basic config..."
             cat > "$config_file" << 'EOF'
 # RobotLab Configuration - Your Control Center
@@ -83,7 +83,7 @@ main() {
     echo ""
     
     # Get config file from command line or use default
-    CONFIG_FILE="${1:-robot.env}"
+    CONFIG_FILE="${1:-platform.env}"
     
     print_step "Using configuration file: $CONFIG_FILE"
     echo ""
