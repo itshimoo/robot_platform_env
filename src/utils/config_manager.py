@@ -173,6 +173,7 @@ CMD ["bash"]
         docker_config = {}
         docker_keys = [
             'DOCKER_IMAGE_NAME',
+            'DOCKER_CONTAINER_NAME',
             'DOCKER_TAG',
             'GPU_ENABLED'
         ]

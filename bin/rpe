@@ -426,7 +426,6 @@ def pull_command(config: ConfigManager, docker_mgr: DockerManager):
     success = docker_mgr.pull_image()
     if success:
         print("✅ Image pulled successfully")
-        print("💡 Run 'rpe run' to start container with latest image")
     else:
         print("❌ Failed to pull image")
         sys.exit(1)

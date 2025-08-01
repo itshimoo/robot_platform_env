@@ -22,7 +22,7 @@ class DockerManager:
     def build_image(self, dockerfile_path: str = "Dockerfile") -> bool:
         """Build Docker image"""
         try:
-            image_name = 'robotlab-ros'  # Default image name
+            image_name = self.docker_config.get('DOCKER_IMAGE_NAME', 'robotlab-ros')
             tag = self.docker_config.get('DOCKER_TAG', 'latest')
             full_image_name = f"{image_name}:{tag}"
             
@@ -56,8 +56,8 @@ class DockerManager:
     def run_container(self, port: Optional[int] = None) -> bool:
         """Run Docker container"""
         try:
-            container_name = 'robotlab-container'  # Default container name
-            image_name = 'robotlab-ros'  # Default image name
+            container_name = self.docker_config.get('DOCKER_CONTAINER_NAME', 'robotlab-container')
+            image_name = self.docker_config.get('DOCKER_IMAGE_NAME', 'robotlab-ros')
             tag = self.docker_config.get('DOCKER_TAG', 'latest')
             full_image_name = f"{image_name}:{tag}"
             
@@ -129,7 +129,7 @@ class DockerManager:
     def stop_container(self) -> bool:
         """Stop Docker container"""
         try:
-            container_name = 'robotlab-container'  # Default container name
+            container_name = self.docker_config.get('DOCKER_CONTAINER_NAME', 'robotlab-container')
             
             print(f"Stopping container: {container_name}")
             
@@ -151,7 +151,7 @@ class DockerManager:
     def remove_container(self) -> bool:
         """Remove Docker container"""
         try:
-            container_name = 'robotlab-container'  # Default container name
+            container_name = self.docker_config.get('DOCKER_CONTAINER_NAME', 'robotlab-container')
             
             print(f"Removing container: {container_name}")
             
@@ -173,7 +173,7 @@ class DockerManager:
     def get_container_status(self) -> Dict[str, Any]:
         """Get container status information"""
         try:
-            container_name = 'robotlab-container'  # Default container name
+            container_name = self.docker_config.get('DOCKER_CONTAINER_NAME', 'robotlab-container')
             
             cmd = [
                 'docker', 'ps', 
@@ -220,7 +220,7 @@ class DockerManager:
     def shell_into_container(self) -> bool:
         """Shell into running container"""
         try:
-            container_name = 'robotlab-container'  # Default container name
+            container_name = self.docker_config.get('DOCKER_CONTAINER_NAME', 'robotlab-container')
             
             cmd = [
                 'docker', 'exec', '-it',
@@ -241,7 +241,7 @@ class DockerManager:
     def get_logs(self, lines: int = 50) -> str:
         """Get container logs"""
         try:
-            container_name = 'robotlab-container'  # Default container name
+            container_name = self.docker_config.get('DOCKER_CONTAINER_NAME', 'robotlab-container')
             
             cmd = [
                 'docker', 'logs',
@@ -347,16 +347,11 @@ class DockerManager:
             print(f"✅ Successfully pulled image: {full_image_name}")
             return True
                 
-        except subprocess.CalledProcessError as e:
-            print(f"❌ Error pulling image: {e}")
-            print("💡 This might be because:")
-            print("   • The image doesn't exist in the registry yet")
-            print("   • You need to authenticate with the registry")
-            print("   • The registry URL is incorrect")
-            print("💡 Try building locally with 'xr build' instead")
+        except subprocess.CalledProcessError:
+            print("❌ Failed to pull image from registry")
             return False
-        except Exception as e:
-            print(f"❌ Exception during pull: {e}")
+        except Exception:
+            print("❌ Failed to pull image from registry")
             return False
 
 
