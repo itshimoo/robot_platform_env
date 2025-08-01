@@ -135,8 +135,14 @@ install_robotlab() {
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
     
-    # Get CLI command name from environment or use default
-    CLI_COMMAND="${CLI_COMMAND:-robotlab}"
+    # Get CLI command name from platform.env or use default
+    if [ -f "platform.env" ]; then
+        # Source platform.env to get CLI_COMMAND
+        export $(grep -v '^#' platform.env | xargs)
+        CLI_COMMAND="${CLI_COMMAND:-robotlab}"
+    else
+        CLI_COMMAND="${CLI_COMMAND:-robotlab}"
+    fi
     
     # Create config directory
     mkdir -p "$CONFIG_PATH"
@@ -175,7 +181,7 @@ install_robotlab() {
         
         # Install hyphenated command scripts
         print_status "Installing hyphenated commands..."
-        for cmd in build run stop status logs shell webgui config update clean; do
+        for cmd in build run stop status logs shell webgui config update clean gpu rviz workspace; do
             if [ -f "$PROJECT_DIR/bin/$cmd" ]; then
                 ln -sf "$PROJECT_DIR/bin/$cmd" "$INSTALL_PATH/$CLI_COMMAND-$cmd"
                 print_success "Created hyphenated command: $INSTALL_PATH/$CLI_COMMAND-$cmd"
