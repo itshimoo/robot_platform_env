@@ -14,29 +14,80 @@
         </header>
 
         <main>
-            <!-- Control Buttons -->
-            <section class="controls">
-                <h2>Container Controls</h2>
-                <div class="button-group">
-                    <button onclick="buildContainer()" class="btn btn-primary">Build</button>
-                    <button onclick="runContainer()" class="btn btn-success">Run</button>
-                    <button onclick="stopContainer()" class="btn btn-danger">Stop</button>
+            <!-- Configuration Status -->
+            <section class="config-status">
+                <h2>🤖 RobotLab Configuration</h2>
+                <div id="config" class="config-content">
+                    <p>Loading configuration...</p>
                 </div>
             </section>
 
-            <!-- Status -->
+            <!-- Container Controls -->
+            <section class="controls">
+                <h2>🚀 Container Controls</h2>
+                <div class="button-grid">
+                    <button onclick="buildContainer()" class="btn btn-primary">
+                        <span class="icon">🔨</span> Build
+                    </button>
+                    <button onclick="runContainer()" class="btn btn-success">
+                        <span class="icon">▶️</span> Run
+                    </button>
+                    <button onclick="stopContainer()" class="btn btn-danger">
+                        <span class="icon">⏹️</span> Stop
+                    </button>
+                    <button onclick="cleanContainer()" class="btn btn-warning">
+                        <span class="icon">🧹</span> Clean
+                    </button>
+                </div>
+            </section>
+
+            <!-- GPU Controls -->
+            <section class="gpu-controls">
+                <h2>🎮 GPU Controls</h2>
+                <div class="button-group">
+                    <button onclick="toggleGPU()" class="btn btn-gpu">
+                        <span class="icon">🎮</span> Toggle GPU
+                    </button>
+                    <div id="gpu-status" class="gpu-status">
+                        <p>Loading GPU status...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Container Status -->
             <section class="status">
-                <h2>Container Status</h2>
+                <h2>📊 Container Status</h2>
+                <div class="status-header">
+                    <button onclick="updateStatus()" class="btn btn-secondary">
+                        <span class="icon">🔄</span> Refresh
+                    </button>
+                </div>
                 <div id="status" class="status-content">
                     <p>Loading...</p>
                 </div>
             </section>
 
+            <!-- Advanced Commands -->
+            <section class="advanced-commands">
+                <h2>⚙️ Advanced Commands</h2>
+                <div class="button-grid">
+                    <button onclick="openShell()" class="btn btn-info">
+                        <span class="icon">💻</span> Shell
+                    </button>
+                    <button onclick="updateConfig()" class="btn btn-secondary">
+                        <span class="icon">⚙️</span> Update Config
+                    </button>
+                    <button onclick="loadLogs()" class="btn btn-secondary">
+                        <span class="icon">📋</span> View Logs
+                    </button>
+                </div>
+            </section>
+
             <!-- Command Execution -->
             <section class="command">
-                <h2>Execute Command</h2>
+                <h2>🔧 Execute Command</h2>
                 <div class="command-input">
-                    <input type="text" id="commandInput" placeholder="Enter command..." />
+                    <input type="text" id="commandInput" placeholder="Enter robocmd command..." />
                     <button onclick="executeCommand()" class="btn btn-primary">Execute</button>
                 </div>
                 <div id="output" class="output-content"></div>
@@ -44,8 +95,12 @@
 
             <!-- Logs -->
             <section class="logs">
-                <h2>Container Logs</h2>
-                <button onclick="loadLogs()" class="btn btn-secondary">Load Logs</button>
+                <h2>📋 Container Logs</h2>
+                <div class="logs-header">
+                    <button onclick="loadLogs()" class="btn btn-secondary">
+                        <span class="icon">🔄</span> Refresh Logs
+                    </button>
+                </div>
                 <div id="logs" class="logs-content"></div>
             </section>
         </main>

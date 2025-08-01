@@ -134,6 +134,33 @@ app.get('/api/config', async (req, res) => {
     }
 });
 
+app.post('/api/gpu', async (req, res) => {
+    try {
+        const output = await runPythonCommand('gpu');
+        res.json({ success: true, data: output });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+app.post('/api/shell', async (req, res) => {
+    try {
+        const output = await runPythonCommand('shell');
+        res.json({ success: true, data: output });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+app.post('/api/update', async (req, res) => {
+    try {
+        const output = await runPythonCommand('update');
+        res.json({ success: true, data: output });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 // Start server
 app.listen(PORT, HOST, () => {
     console.log(`🚀 RobotLab Web GUI running on http://${HOST}:${PORT}`);

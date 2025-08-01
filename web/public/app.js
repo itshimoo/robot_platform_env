@@ -36,6 +36,40 @@ document.addEventListener('DOMContentLoaded', function() {
             statusDiv.innerHTML = `<p class="error">Error: ${result.error}</p>`;
         }
     }
+
+    // Update configuration display
+    async function updateConfig() {
+        const result = await apiCall('config');
+        const configDiv = document.getElementById('config');
+        
+        if (result.success) {
+            configDiv.innerHTML = `<pre>${result.data}</pre>`;
+        } else {
+            configDiv.innerHTML = `<p class="error">Error: ${result.error}</p>`;
+        }
+    }
+
+    // Update GPU status
+    async function updateGPUStatus() {
+        const result = await apiCall('config');
+        const gpuStatusDiv = document.getElementById('gpu-status');
+        
+        if (result.success) {
+            // Extract GPU status from config output
+            const gpuEnabled = result.data.includes('🚀 GPU Support: ENABLED');
+            const gpuDisabled = result.data.includes('💻 GPU Support: DISABLED');
+            
+            if (gpuEnabled) {
+                gpuStatusDiv.innerHTML = `<p style="color: #28a745;">🚀 GPU Support: ENABLED (AI workloads ready)</p>`;
+            } else if (gpuDisabled) {
+                gpuStatusDiv.innerHTML = `<p style="color: #6c757d;">💻 GPU Support: DISABLED (CPU-only mode)</p>`;
+            } else {
+                gpuStatusDiv.innerHTML = `<p>Loading GPU status...</p>`;
+            }
+        } else {
+            gpuStatusDiv.innerHTML = `<p class="error">Error: ${result.error}</p>`;
+        }
+    }
     
     // Button click handlers
     window.buildContainer = async function() {
@@ -65,6 +99,50 @@ document.addEventListener('DOMContentLoaded', function() {
             updateStatus();
         } else {
             alert('Failed to stop container: ' + result.error);
+        }
+    };
+
+    window.cleanContainer = async function() {
+        const result = await apiCall('clean', 'POST');
+        if (result.success) {
+            alert('Container cleaned successfully!');
+            updateStatus();
+        } else {
+            alert('Failed to clean container: ' + result.error);
+        }
+    };
+
+    window.toggleGPU = async function() {
+        const result = await apiCall('gpu', 'POST');
+        if (result.success) {
+            alert('GPU toggled successfully!');
+            updateStatus();
+            updateGPUStatus();
+            updateConfig();
+        } else {
+            alert('Failed to toggle GPU: ' + result.error);
+        }
+    };
+
+    window.openShell = async function() {
+        const result = await apiCall('shell', 'POST');
+        if (result.success) {
+            alert('Shell opened successfully! Check your terminal.');
+            updateStatus();
+        } else {
+            alert('Failed to open shell: ' + result.error);
+        }
+    };
+
+    window.updateConfig = async function() {
+        const result = await apiCall('update', 'POST');
+        if (result.success) {
+            alert('Configuration updated successfully!');
+            updateStatus();
+            updateConfig();
+            updateGPUStatus();
+        } else {
+            alert('Failed to update configuration: ' + result.error);
         }
     };
     
@@ -100,5 +178,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Load initial data
     updateStatus();
+    updateConfig();
+    updateGPUStatus();
     loadLogs();
 }); 
