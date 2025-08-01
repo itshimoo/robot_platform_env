@@ -7,7 +7,7 @@ _robotlab() {
     prev="${COMP_WORDS[COMP_CWORD-1]}"
     
     # Available commands
-    cmds="build run stop status logs shell webgui config update clean gpu rviz workspace"
+    cmds="build run stop status logs shell webgui config update clean gpu rviz gazebo workspace"
     
     # Available options
     opts="--help --version"

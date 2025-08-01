@@ -1,0 +1,3 @@
+#!/bin/bash
+# RobotLab gazebo command
+exec "$(dirname "$0")/rpe" gazebo "$@" 

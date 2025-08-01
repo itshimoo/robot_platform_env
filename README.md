@@ -14,6 +14,8 @@ Robot Platform Environment is a comprehensive system for managing Docker-based R
 - **Dynamic Configuration**: Environment-based configuration with automatic path detection
 - **Auto-completion Support**: Bash completion for CLI commands
 - **Modular Architecture**: Separated concerns with specialized managers
+- **Simulation Support**: Integrated Gazebo simulation environment with ROS
+- **GUI Applications**: RViz, Gazebo, and other ROS GUI tools with X11 forwarding
 
 ## Quick Start
 

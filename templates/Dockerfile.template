@@ -51,6 +51,13 @@ RUN apt-get update && apt-get install -y \
     ros-${ROS_DISTRO}-tf2 \
     ros-${ROS_DISTRO}-tf2-ros \
     ros-${ROS_DISTRO}-tf2-geometry-msgs \
+    # Gazebo and simulation packages
+    ros-${ROS_DISTRO}-gazebo-ros-pkgs \
+    ros-${ROS_DISTRO}-gazebo-ros-control \
+    ros-${ROS_DISTRO}-gazebo-plugins \
+    ros-${ROS_DISTRO}-gazebo-dev \
+    ros-${ROS_DISTRO}-gazebo-msgs \
+    ros-${ROS_DISTRO}-gazebo-ros \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python packages for development
