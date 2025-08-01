@@ -60,6 +60,12 @@ class DockerManager:
             if port is None:
                 port = self.docker_config.get('DOCKER_PORT', 8080)
             
+            # Check if container already exists and remove it
+            status = self.get_container_status()
+            if status.get('name') and status.get('name') != 'Unknown':
+                print(f"Container {container_name} already exists. Removing it first...")
+                self.remove_container()
+            
             print(f"Starting container: {container_name}")
             
             cmd = [

@@ -143,7 +143,7 @@ def webgui_command(config: ConfigManager):
         sys.exit(1)
     
     # Start the web GUI
-    webgui_script = current_dir / "webgui-cli.py"
+    webgui_script = current_dir / "rpe-webgui.py"
     if webgui_script.exists():
         try:
             subprocess.run([sys.executable, str(webgui_script)], check=True)
