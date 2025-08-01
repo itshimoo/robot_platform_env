@@ -89,6 +89,9 @@ class DockerManager:
                 '--hostname', hostname,
                 '-p', f"{port}:{port}",
                 '-v', f"{os.getcwd()}:{self.docker_config.get('DOCKER_VOLUME_PATH', '/workspace')}",
+                # X11 forwarding for GUI applications
+                '-e', 'DISPLAY=$DISPLAY',
+                '-v', '/tmp/.X11-unix:/tmp/.X11-unix:rw',
             ]
             
             # Add GPU support if enabled

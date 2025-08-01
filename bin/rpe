@@ -246,6 +246,47 @@ def gpu_command(config: ConfigManager, docker_mgr: DockerManager):
         print("💡 Container not running - GPU setting will apply on next 'rpe run'")
 
 
+def rviz_command(config: ConfigManager, docker_mgr: DockerManager):
+    """Run RViz in the container with X11 forwarding"""
+    print("🎯 Starting RViz with X11 forwarding...")
+    
+    # Check if container is running
+    status = docker_mgr.get_container_status()
+    if not status.get('running', False):
+        print("❌ Container is not running. Please start it first with 'rpe run'")
+        return False
+    
+    # Check if X11 is available
+    if not os.environ.get('DISPLAY'):
+        print("❌ X11 display not available. Please ensure you're running in a GUI environment.")
+        return False
+    
+    # Allow X11 connections from container
+    print("🔓 Allowing X11 connections from container...")
+    subprocess.run(['xhost', '+local:'], check=True)
+    
+    # Run RViz in the container
+    container_name = config.get('DOCKER_CONTAINER_NAME', 'robotlab-container')
+    display = os.environ.get('DISPLAY', ':0')
+    cmd = [
+        'docker', 'exec', '-it',
+        '-e', f'DISPLAY={display}',
+        container_name,
+        'bash', '-c', 'source /opt/ros/noetic/setup.bash && rviz'
+    ]
+    
+    try:
+        print("🚀 Launching RViz...")
+        subprocess.run(cmd, check=True)
+        return True
+    except subprocess.CalledProcessError as e:
+        print(f"❌ Failed to start RViz: {e}")
+        return False
+    except KeyboardInterrupt:
+        print("\n🛑 RViz stopped by user")
+        return True
+
+
 def clean_command(config: ConfigManager, docker_mgr: DockerManager):
     """Clean up Docker container and images"""
     print("🧹 Cleaning up Robot Platform Environment...")
@@ -296,11 +337,12 @@ Examples:
   {cli_command}-update         Update configuration from platform.env
   {cli_command}-clean          Clean up container and images
   {cli_command}-gpu            Toggle GPU support on/off
+  {cli_command}-rviz           Run RViz with X11 forwarding
         """
     )
     
     parser.add_argument('command', nargs='?', choices=[
-        'build', 'run', 'stop', 'status', 'logs', 'shell', 'webgui', 'config', 'update', 'clean', 'gpu'
+        'build', 'run', 'stop', 'status', 'logs', 'shell', 'webgui', 'config', 'update', 'clean', 'gpu', 'rviz'
     ], help='Command to execute')
     
     parser.add_argument('-n', '--lines', type=int, default=50, 
@@ -338,6 +380,8 @@ Examples:
         clean_command(config, docker_mgr)
     elif args.command == 'gpu':
         gpu_command(config, docker_mgr)
+    elif args.command == 'rviz':
+        rviz_command(config, docker_mgr)
     else:
         print(f"Unknown command: {args.command}")
         sys.exit(1)
