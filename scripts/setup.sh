@@ -135,8 +135,14 @@ install_robotlab() {
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
     
-    # Get CLI command name from environment or use default
-    CLI_COMMAND="${CLI_COMMAND:-robotlab}"
+    # Get CLI command name from platform.env or use default
+    if [ -f "platform.env" ]; then
+        # Source platform.env to get CLI_COMMAND
+        export $(grep -v '^#' platform.env | xargs)
+        CLI_COMMAND="${CLI_COMMAND:-robotlab}"
+    else
+        CLI_COMMAND="${CLI_COMMAND:-robotlab}"
+    fi
     
     # Create config directory
     mkdir -p "$CONFIG_PATH"
@@ -148,8 +154,8 @@ install_robotlab() {
     fi
     
     # Make rpe script executable
-    chmod +x "$PROJECT_DIR/rpe"
-    chmod +x "$PROJECT_DIR/rpe-webgui.py"
+    chmod +x "$PROJECT_DIR/bin/rpe"
+    chmod +x "$PROJECT_DIR/web/rpe-webgui.py"
     
     # Create or update the CLI symlink
     if [ -w "$INSTALL_PATH" ]; then
@@ -164,14 +170,23 @@ install_robotlab() {
         fi
         
         # Create the symlink with the custom command name
-        ln -sf "$PROJECT_DIR/rpe" "$INSTALL_PATH/$CLI_COMMAND"
+        ln -sf "$PROJECT_DIR/bin/rpe" "$INSTALL_PATH/$CLI_COMMAND"
         print_success "Created symlink: $INSTALL_PATH/$CLI_COMMAND"
         
         # If CLI_COMMAND is not 'rpe', also create an 'rpe' symlink for backward compatibility
         if [ "$CLI_COMMAND" != "rpe" ]; then
-            ln -sf "$PROJECT_DIR/rpe" "$INSTALL_PATH/rpe"
+            ln -sf "$PROJECT_DIR/bin/rpe" "$INSTALL_PATH/rpe"
             print_success "Created backward compatibility symlink: $INSTALL_PATH/rpe"
         fi
+        
+        # Install hyphenated command scripts
+        print_status "Installing hyphenated commands..."
+        for cmd in build run stop status logs shell webgui config update clean gpu rviz workspace; do
+            if [ -f "$PROJECT_DIR/bin/$cmd" ]; then
+                ln -sf "$PROJECT_DIR/bin/$cmd" "$INSTALL_PATH/$CLI_COMMAND-$cmd"
+                print_success "Created hyphenated command: $INSTALL_PATH/$CLI_COMMAND-$cmd"
+            fi
+        done
     else
         print_warning "Cannot write to $INSTALL_PATH. Using local installation."
         print_warning "Add $PROJECT_DIR to your PATH or run from project directory."

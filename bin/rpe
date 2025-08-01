@@ -1,0 +1,452 @@
+#!/usr/bin/env python3
+"""
+Robot Platform Environment CLI - Main command-line interface
+"""
+
+import os
+import sys
+import argparse
+import subprocess
+from pathlib import Path
+
+# Add the src directory to Python path for imports
+# Resolve the actual script location (handles symlinks)
+script_path = Path(__file__).resolve()
+current_dir = script_path.parent
+# Since we're in bin/, go up one level to find src/
+project_dir = current_dir.parent
+src_dir = project_dir / "src"
+sys.path.insert(0, str(src_dir))
+
+# Set PYTHONPATH environment variable
+os.environ['PYTHONPATH'] = f"{src_dir}:{os.environ.get('PYTHONPATH', '')}"
+
+from utils.config_manager import ConfigManager
+from utils.docker_manager import DockerManager
+
+
+def setup_environment():
+    """Setup environment for CLI execution"""
+    # Set PYTHONPATH to include the src directory
+    current_dir = Path(__file__).parent
+    # Since we're in bin/, go up one level to find src/
+    project_dir = current_dir.parent
+    src_dir = project_dir / "src"
+    python_path = os.environ.get('PYTHONPATH', '')
+    if str(src_dir) not in python_path:
+        os.environ['PYTHONPATH'] = f"{src_dir}:{python_path}"
+
+
+def build_command(config: ConfigManager, docker_mgr: DockerManager):
+    """Build Docker image"""
+    print("Building Robot Platform Environment Docker image...")
+    
+    # Generate Dockerfile if it doesn't exist
+    dockerfile_path = "Dockerfile"
+    if not os.path.exists(dockerfile_path):
+        dockerfile_content = config.generate_dockerfile()
+        with open(dockerfile_path, 'w') as f:
+            f.write(dockerfile_content)
+        print("Generated Dockerfile from template")
+    
+    # Build the image
+    success = docker_mgr.build_image(dockerfile_path)
+    if success:
+        print("✅ Build completed successfully")
+    else:
+        print("❌ Build failed")
+        sys.exit(1)
+
+
+def run_command(config: ConfigManager, docker_mgr: DockerManager):
+    """Run Docker container"""
+    print("Starting Robot Platform Environment container...")
+    
+    # Check if container is already running
+    status = docker_mgr.get_container_status()
+    if status.get('running', False):
+        print("Container is already running")
+        return
+    
+    # Start the container
+    success = docker_mgr.run_container()
+    if success:
+        print("✅ Container started successfully")
+        print(f"Container accessible on port {config.get('DOCKER_PORT', 8080)}")
+        
+        # Show GPU status if enabled
+        if config.get('GPU_ENABLED', False):
+            print("🚀 GPU support enabled - AI workloads ready")
+        else:
+            print("💻 CPU-only mode - GPU disabled")
+    else:
+        print("❌ Failed to start container")
+        sys.exit(1)
+
+
+def stop_command(config: ConfigManager, docker_mgr: DockerManager):
+    """Stop Docker container"""
+    print("Stopping Robot Platform Environment container...")
+    
+    success = docker_mgr.stop_container()
+    if success:
+        print("✅ Container stopped successfully")
+    else:
+        print("❌ Failed to stop container")
+        sys.exit(1)
+
+
+def status_command(config: ConfigManager, docker_mgr: DockerManager):
+    """Show container status"""
+    print("Robot Platform Environment Container Status:")
+    print("=" * 40)
+    
+    # Check Docker status
+    if not docker_mgr.is_docker_running():
+        print("❌ Docker is not running")
+        return
+    
+    # Get container status
+    status = docker_mgr.get_container_status()
+    
+    print(f"Container Name: {status.get('name', 'Unknown')}")
+    print(f"Status: {status.get('status', 'Unknown')}")
+    print(f"Image: {status.get('image', 'Unknown')}")
+    print(f"Ports: {status.get('ports', 'None')}")
+    print(f"Running: {'✅ Yes' if status.get('running', False) else '❌ No'}")
+    print(f"Created: {status.get('created', 'Unknown')}")
+
+
+def logs_command(config: ConfigManager, docker_mgr: DockerManager, lines: int = 50):
+    """Show container logs"""
+    print(f"Container Logs (last {lines} lines):")
+    print("=" * 50)
+    
+    logs = docker_mgr.get_logs(lines)
+    print(logs)
+
+
+def shell_command(config: ConfigManager, docker_mgr: DockerManager):
+    """Shell into container"""
+    print("Opening shell in container...")
+    
+    # Check if container is running
+    status = docker_mgr.get_container_status()
+    if not status.get('running', False):
+        print("❌ Container is not running. Start it first with 'run' command.")
+        sys.exit(1)
+    
+    # Shell into the container
+    success = docker_mgr.shell_into_container()
+    if not success:
+        print("❌ Failed to shell into container")
+        sys.exit(1)
+
+
+def webgui_command(config: ConfigManager):
+    """Start web GUI"""
+    print("Starting Robot Platform Environment Web GUI...")
+    
+    # Check if web GUI is enabled
+    if not config.get('GUI_ENABLED', True):
+        print("❌ Web GUI is disabled in configuration")
+        sys.exit(1)
+    
+    # Start the web GUI
+    # Get project directory (go up from bin/)
+    script_path = Path(__file__).resolve()
+    project_dir = script_path.parent.parent
+    webgui_script = project_dir / "web" / "rpe-webgui.py"
+    if webgui_script.exists():
+        try:
+            subprocess.run([sys.executable, str(webgui_script)], check=True)
+        except subprocess.CalledProcessError as e:
+            print(f"❌ Failed to start web GUI: {e}")
+            sys.exit(1)
+    else:
+        print("❌ Web GUI script not found")
+        sys.exit(1)
+
+
+def config_command(config: ConfigManager):
+    """Show configuration"""
+    print("Robot Platform Environment Configuration:")
+    print("=" * 30)
+    
+    # Show GPU status prominently
+    gpu_enabled = config.get('GPU_ENABLED', False)
+    if gpu_enabled:
+        print("🚀 GPU Support: ENABLED (AI workloads ready)")
+    else:
+        print("💻 GPU Support: DISABLED (CPU-only mode)")
+    print()
+    
+    all_config = config.get_all()
+    for key, value in all_config.items():
+        print(f"{key}: {value}")
+
+
+def update_command(config: ConfigManager, docker_mgr: DockerManager):
+    """Update environment configuration from platform.env"""
+    print("🔄 Updating Robot Platform Environment configuration...")
+    
+    # Reload configuration from platform.env
+    config_file = "platform.env"
+    if not os.path.exists(config_file):
+        print(f"❌ Configuration file '{config_file}' not found!")
+        sys.exit(1)
+    
+    print(f"📖 Reading configuration from {config_file}")
+    
+    # Reload the configuration
+    config.reload_config()
+    
+    print("✅ Configuration updated successfully!")
+    print("")
+    print("📋 Current configuration:")
+    print("=" * 30)
+    
+    all_config = config.get_all()
+    for key, value in all_config.items():
+        print(f"{key}: {value}")
+    
+    print("")
+    print("💡 Next steps:")
+    print("  • Run 'robocmd build' to rebuild with new settings")
+    print("  • Run 'robocmd run' to start container with new config")
+    print("  • Run 'robocmd config' to verify settings")
+
+
+def gpu_command(config: ConfigManager, docker_mgr: DockerManager):
+    """Toggle GPU support on/off"""
+    print("🔄 Toggling GPU support...")
+    
+    # Get current GPU status
+    current_gpu = config.get('GPU_ENABLED', False)
+    new_gpu = not current_gpu
+    
+    # Update the configuration
+    config.set('GPU_ENABLED', new_gpu)
+    config.save_config()
+    
+    # Show status
+    if new_gpu:
+        print("🚀 GPU Support: ENABLED (AI workloads ready)")
+    else:
+        print("💻 GPU Support: DISABLED (CPU-only mode)")
+    
+    # Check if container is running and restart if needed
+    status = docker_mgr.get_container_status()
+    if status.get('running', False):
+        print("🔄 Restarting container with new GPU setting...")
+        docker_mgr.stop_container()
+        docker_mgr.run_container()
+        print("✅ Container restarted with new GPU configuration")
+    else:
+        print("💡 Container not running - GPU setting will apply on next 'rpe run'")
+
+
+def rviz_command(config: ConfigManager, docker_mgr: DockerManager):
+    """Run RViz in the container with X11 forwarding"""
+    print("🎯 Starting RViz with X11 forwarding...")
+    
+    # Check if container is running
+    status = docker_mgr.get_container_status()
+    if not status.get('running', False):
+        print("❌ Container is not running. Please start it first with 'rpe run'")
+        return False
+    
+    # Check if X11 is available
+    if not os.environ.get('DISPLAY'):
+        print("❌ X11 display not available. Please ensure you're running in a GUI environment.")
+        return False
+    
+    # Allow X11 connections from container
+    print("🔓 Allowing X11 connections from container...")
+    subprocess.run(['xhost', '+local:'], check=True)
+    
+    # Run RViz in the container
+    container_name = config.get('DOCKER_CONTAINER_NAME', 'robotlab-container')
+    display = os.environ.get('DISPLAY', ':0')
+    cmd = [
+        'docker', 'exec', '-it',
+        '-e', f'DISPLAY={display}',
+        container_name,
+        'bash', '-c', 'source /opt/ros/noetic/setup.bash && rviz'
+    ]
+    
+    try:
+        print("🚀 Launching RViz...")
+        subprocess.run(cmd, check=True)
+        return True
+    except subprocess.CalledProcessError as e:
+        print(f"❌ Failed to start RViz: {e}")
+        return False
+    except KeyboardInterrupt:
+        print("\n🛑 RViz stopped by user")
+        return True
+
+
+def workspace_command(config: ConfigManager, docker_mgr: DockerManager, args):
+    """Switch to a new workspace directory"""
+    
+    # Get the workspace path from command line arguments
+    if not args:
+        print("❌ Usage: robocmd workspace <path>")
+        print("💡 Example: robocmd workspace /path/to/my/workspace")
+        return False
+    
+    new_workspace = args[0]
+    
+    # Validate the workspace path
+    if not os.path.exists(new_workspace):
+        print(f"❌ Workspace path does not exist: {new_workspace}")
+        return False
+    
+    if not os.path.isdir(new_workspace):
+        print(f"❌ Path is not a directory: {new_workspace}")
+        return False
+    
+    print(f"🔄 Switching workspace to: {new_workspace}")
+    
+    # Check if container is running
+    status = docker_mgr.get_container_status()
+    container_running = status.get('running', False)
+    
+    if container_running:
+        print("🛑 Stopping container...")
+        docker_mgr.stop_container()
+        docker_mgr.remove_container()
+    
+    # Update the workspace path in configuration
+    config.set('WORKSPACE_PATH', new_workspace)
+    config.save_config()
+    
+    print(f"✅ Workspace path updated to: {new_workspace}")
+    
+    # Change to the new workspace directory
+    os.chdir(new_workspace)
+    print(f"📁 Changed to directory: {os.getcwd()}")
+    
+    # Start the container with the new workspace
+    print("🚀 Starting container with new workspace...")
+    success = docker_mgr.run_container()
+    
+    if success:
+        print("✅ Container started successfully with new workspace!")
+        print(f"📁 Workspace: {new_workspace}")
+        print(f"🔗 Container accessible on port {config.get('DOCKER_PORT', 8080)}")
+    else:
+        print("❌ Failed to start container with new workspace")
+        return False
+    
+    return True
+
+
+def clean_command(config: ConfigManager, docker_mgr: DockerManager):
+    """Clean up Docker container and images"""
+    print("🧹 Cleaning up Robot Platform Environment...")
+    
+    # Stop container if running
+    print("Stopping container if running...")
+    docker_mgr.stop_container()
+    
+    # Remove container
+    print("Removing container...")
+    success = docker_mgr.remove_container()
+    
+    if success:
+        print("✅ Container removed successfully")
+    else:
+        print("⚠️  Container was already removed or doesn't exist")
+    
+    # Optionally remove images (commented out for safety)
+    # print("Removing Docker images...")
+    # docker_mgr.cleanup_images()
+    
+    print("✅ Cleanup completed!")
+    print("💡 Run 'robocmd build' to rebuild the container")
+
+
+def main():
+    """Main CLI entry point"""
+    setup_environment()
+    
+    # Get command name from sys.argv[0] (actual command used)
+    script_name = os.path.basename(sys.argv[0])
+    config = ConfigManager()
+    # Use the actual command name, not the config value
+    cli_command = script_name
+    
+    parser = argparse.ArgumentParser(
+        description="Robot Platform Environment - Docker-based ROS Environment Manager",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=f"""
+Examples:
+  {cli_command}-build          Build Docker image
+  {cli_command}-run            Start container
+  {cli_command}-stop           Stop container
+  {cli_command}-status         Show container status
+  {cli_command}-logs           Show container logs
+  {cli_command}-shell          Shell into container
+  {cli_command}-webgui         Start web GUI
+  {cli_command}-update         Update configuration from platform.env
+  {cli_command}-clean          Clean up container and images
+  {cli_command}-gpu            Toggle GPU support on/off
+  {cli_command}-rviz           Run RViz with X11 forwarding
+  {cli_command}-workspace      Switch workspace directory
+        """
+    )
+    
+    parser.add_argument('command', nargs='?', choices=[
+        'build', 'run', 'stop', 'status', 'logs', 'shell', 'webgui', 'config', 'update', 'clean', 'gpu', 'rviz', 'workspace'
+    ], help='Command to execute')
+    
+    parser.add_argument('args', nargs='*', help='Additional arguments for the command')
+    
+    parser.add_argument('-n', '--lines', type=int, default=50, 
+                       help='Number of lines to show for logs (default: 50)')
+    
+    args = parser.parse_args()
+    
+    if not args.command:
+        parser.print_help()
+        return
+    
+    # Initialize docker manager
+    docker_mgr = DockerManager(config)
+    
+    # Execute command
+    if args.command == 'build':
+        build_command(config, docker_mgr)
+    elif args.command == 'run':
+        run_command(config, docker_mgr)
+    elif args.command == 'stop':
+        stop_command(config, docker_mgr)
+    elif args.command == 'status':
+        status_command(config, docker_mgr)
+    elif args.command == 'logs':
+        logs_command(config, docker_mgr, args.lines)
+    elif args.command == 'shell':
+        shell_command(config, docker_mgr)
+    elif args.command == 'webgui':
+        webgui_command(config)
+    elif args.command == 'config':
+        config_command(config)
+    elif args.command == 'update':
+        update_command(config, docker_mgr)
+    elif args.command == 'clean':
+        clean_command(config, docker_mgr)
+    elif args.command == 'gpu':
+        gpu_command(config, docker_mgr)
+    elif args.command == 'rviz':
+        rviz_command(config, docker_mgr)
+    elif args.command == 'workspace':
+        workspace_command(config, docker_mgr, args.args)
+    else:
+        print(f"Unknown command: {args.command}")
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main() 

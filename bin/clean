@@ -1,0 +1,3 @@
+#!/bin/bash
+# RobotLab clean command
+exec "$(dirname "$0")/rpe" clean "$@" 

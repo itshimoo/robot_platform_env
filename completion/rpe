@@ -7,7 +7,7 @@ _robotlab() {
     prev="${COMP_WORDS[COMP_CWORD-1]}"
     
     # Available commands
-    cmds="build run stop status logs shell webgui config"
+    cmds="build run stop status logs shell webgui config update clean gpu rviz workspace"
     
     # Available options
     opts="--help --version"
@@ -27,6 +27,16 @@ _robotlab() {
 complete -F _robotlab rpe
 
 # Complete for common custom command names
+complete -F _robotlab myrobot
+complete -F _robotlab rosbot
+complete -F _robotlab autobot
+complete -F _robotlab xi
+complete -F _robotlab drone
+complete -F _robotlab rover
+
+# Complete for hyphenated commands
+complete -F _robotlab robocmd
+complete -F _robotlab robotlab
 complete -F _robotlab myrobot
 complete -F _robotlab rosbot
 complete -F _robotlab autobot

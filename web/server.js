@@ -20,7 +20,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 function runPythonCommand(command, args = []) {
     return new Promise((resolve, reject) => {
         const pythonPath = path.join(__dirname, '..', 'src');
-        const scriptPath = path.join(__dirname, '..', 'rpe');
+        const scriptPath = path.join(__dirname, '..', 'bin', 'rpe');
         
         const childProcess = spawn('python3', [scriptPath, command, ...args], {
             cwd: path.join(__dirname, '..'),
@@ -92,6 +92,15 @@ app.post('/api/stop', async (req, res) => {
     }
 });
 
+app.post('/api/clean', async (req, res) => {
+    try {
+        const output = await runPythonCommand('clean');
+        res.json({ success: true, data: output });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 app.post('/api/exec', async (req, res) => {
     try {
         const { command } = req.body;
@@ -119,6 +128,33 @@ app.get('/api/logs', async (req, res) => {
 app.get('/api/config', async (req, res) => {
     try {
         const output = await runPythonCommand('config');
+        res.json({ success: true, data: output });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+app.post('/api/gpu', async (req, res) => {
+    try {
+        const output = await runPythonCommand('gpu');
+        res.json({ success: true, data: output });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+app.post('/api/shell', async (req, res) => {
+    try {
+        const output = await runPythonCommand('shell');
+        res.json({ success: true, data: output });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+app.post('/api/update', async (req, res) => {
+    try {
+        const output = await runPythonCommand('update');
         res.json({ success: true, data: output });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });

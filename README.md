@@ -7,6 +7,7 @@ Robot Platform Environment is a comprehensive system for managing Docker-based R
 ## Features
 
 - **Docker-based ROS Environments**: Isolated ROS development environments using Docker containers
+- **GPU Support**: Optional NVIDIA GPU acceleration for AI workloads
 - **Dual Interface**: Both CLI and modern web-based GUI for system management
 - **Real-time Monitoring**: Live container status and console output monitoring
 - **Cross-platform Compatibility**: Works across different Linux distributions
@@ -247,6 +248,61 @@ export ROBOTLAB_CLI_COMMAND_NAME="myros"
 - ✅ **No Hardcoded Strings**: Eliminates scattered project names
 - ✅ **Environment Override**: Customize without code changes
 
+## GPU Support
+
+RobotLab includes optional NVIDIA GPU support for AI workloads. This allows you to run machine learning frameworks like PyTorch, TensorFlow, and OpenCV with GPU acceleration inside the container.
+
+### GPU Configuration
+
+Set `GPU_ENABLED=true` in your `platform.env` file to enable GPU support:
+
+```bash
+# Docker Settings
+DOCKER_IMAGE=my_robot_ros
+DOCKER_CONTAINER=my_robot_container
+DOCKER_PORT=8080
+CONTAINER_HOSTNAME=dev-container
+GPU_ENABLED=true  # Enable GPU support
+```
+
+### GPU Setup
+
+1. **Check GPU availability:**
+```bash
+./scripts/check-gpu.sh
+```
+
+2. **Install NVIDIA drivers** (if not already installed):
+```bash
+sudo apt update
+sudo apt install nvidia-driver-xxx  # Replace xxx with appropriate version
+```
+
+3. **Install nvidia-docker** (if not already installed):
+```bash
+curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
+distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
+curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
+sudo apt-get update && sudo apt-get install -y nvidia-docker2
+sudo systemctl restart docker
+```
+
+### GPU Usage
+
+- **With GPU**: `robocmd run` (when `GPU_ENABLED=true`)
+- **Without GPU**: `robocmd run` (when `GPU_ENABLED=false`)
+
+The container will automatically detect and use available GPUs when enabled.
+
+### GPU Libraries Included
+
+The Docker image includes:
+- **PyTorch** with CUDA support
+- **TensorFlow** with GPU acceleration
+- **OpenCV** for computer vision
+- **CUDA Toolkit** and cuDNN
+- **scikit-learn** and **pandas** for data science
+
 ## Configuration
 
 The system uses a **centralized configuration system** located in `src/utils/project_config.py`. All project names and settings are defined in one place, making it easy to customize and maintain.
@@ -260,6 +316,7 @@ The system uses a **centralized configuration system** located in `src/utils/pro
 - `ROS_DISTRO`: ROS distribution (e.g., noetic, melodic)
 - `WEB_PORT`: Port for the web GUI
 - `DOCKER_PORT`: Port for Docker container
+- `GPU_ENABLED`: Enable/disable GPU support
 
 ## Development
 

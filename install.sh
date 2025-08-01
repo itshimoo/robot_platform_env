@@ -62,16 +62,21 @@ load_config() {
     
     if [ -f "$config_file" ]; then
         print_step "Loading configuration from $config_file"
-        # Source the config file to load variables
-        set -a  # automatically export all variables
-        source "$config_file"
-        set +a  # stop automatically exporting
+        
+        # Read and export variables from config file, ignoring comments and empty lines
+        while IFS= read -r line; do
+            # Skip empty lines and comments
+            if [[ -n "$line" && ! "$line" =~ ^[[:space:]]*# ]]; then
+                # Export the variable
+                export "$line"
+            fi
+        done < "$config_file"
         
         print_success "Configuration loaded:"
-        echo "  Robot: $ROBOT_NAME ($ROBOT_TYPE)"
-        echo "  ROS: $ROS_DISTRO"
-        echo "  Docker: $DOCKER_IMAGE:$DOCKER_CONTAINER"
-        echo "  Port: $DOCKER_PORT"
+        echo "  Robot: ${ROBOT_NAME:-'Not set'} (${ROBOT_TYPE:-'Not set'})"
+        echo "  ROS: ${ROS_DISTRO:-'Not set'}"
+        echo "  Docker: ${DOCKER_IMAGE:-'Not set'}:${DOCKER_CONTAINER:-'Not set'}"
+        echo "  Port: ${DOCKER_PORT:-'Not set'}"
         echo ""
     fi
 }
@@ -89,9 +94,9 @@ main() {
     echo ""
     
     # Check if we're in the right directory
-    if [ ! -f "scripts/setup.sh" ] || [ ! -f "scripts/env-setup.sh" ]; then
+    if [ ! -f "scripts/setup.sh" ] || [ ! -f "scripts/env-setup.sh" ] || [ ! -f "bin/rpe" ]; then
         print_warning "Error: Please run this script from the Robot Platform Environment project directory"
-        echo "Make sure you're in the directory containing the 'scripts' folder"
+        echo "Make sure you're in the directory containing the 'scripts' and 'bin' folders"
         exit 1
     fi
     
@@ -109,6 +114,16 @@ main() {
     ./scripts/setup.sh
     
     echo ""
+    print_step "Step 3: Setting up Git-enhanced Bash prompt..."
+    # Run the git bash prompt setup script
+    if [ -f "git_bash_prompt_setup.sh" ]; then
+        chmod +x git_bash_prompt_setup.sh
+        ./git_bash_prompt_setup.sh
+    else
+        print_warning "git_bash_prompt_setup.sh not found. Skipping Git prompt setup."
+    fi
+    
+    echo ""
     print_success "🎉 Robot Platform Environment installation completed successfully!"
     echo ""
     echo "Your robot configuration:"
@@ -119,7 +134,7 @@ main() {
     echo "  CLI Command: ${CLI_COMMAND:-robotlab}"
     echo ""
     echo "Next steps:"
-    echo "1. Restart your terminal or run: source ~/.bashrc"
+    echo "1. Restart your terminal or run: source ~/.bashrc (to activate Git prompt)"
     echo "2. Test the installation: ${CLI_COMMAND:-robotlab} --help"
     echo "3. Build your robot container: ${CLI_COMMAND:-robotlab} build"
     echo "4. Start the web GUI: ${CLI_COMMAND:-robotlab} webgui"

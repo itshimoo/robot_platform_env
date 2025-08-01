@@ -1,0 +1,3 @@
+#!/bin/bash
+# RobotLab logs command
+exec "$(dirname "$0")/rpe" logs "$@" 

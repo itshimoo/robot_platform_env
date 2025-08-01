@@ -1,0 +1,3 @@
+#!/bin/bash
+# RobotLab gpu command
+exec "$(dirname "$0")/rpe" gpu "$@" 

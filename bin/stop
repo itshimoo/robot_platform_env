@@ -1,0 +1,3 @@
+#!/bin/bash
+# RobotLab stop command
+exec "$(dirname "$0")/rpe" stop "$@" 

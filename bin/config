@@ -1,0 +1,3 @@
+#!/bin/bash
+# RobotLab config command
+exec "$(dirname "$0")/rpe" config "$@" 

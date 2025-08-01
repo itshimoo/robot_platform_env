@@ -1,0 +1,3 @@
+#!/bin/bash
+# RobotLab rviz command
+exec "$(dirname "$0")/rpe" rviz "$@" 

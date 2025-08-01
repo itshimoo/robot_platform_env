@@ -1,0 +1,14 @@
+.git
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+*.swp
+.DS_Store
+tests/
+node_modules/
+web/node_modules/
+.env
+platform.env
+platform.env.example

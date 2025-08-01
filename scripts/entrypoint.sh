@@ -35,13 +35,8 @@ if [ ! -d "/workspace/src" ]; then
     echo "✅ Workspace initialized"
 fi
 
-# Check if workspace needs to be built
-if [ ! -d "/workspace/devel" ]; then
-    echo "🔨 Building workspace..."
-    cd /workspace
-    catkin build
-    echo "✅ Workspace built"
-fi
+# Note: Workspace building is now manual
+# Use 'catkin build' when ready to build your workspace
 
 # Show available ROS packages
 echo "📦 Available ROS packages:"
@@ -51,11 +46,16 @@ echo "..."
 # Show workspace status
 echo "📁 Workspace status:"
 cd /workspace
-catkin status --verbose 2>/dev/null || echo "No packages in workspace yet"
+if [ -d "src" ]; then
+    catkin status --verbose 2>/dev/null || echo "Workspace initialized but no packages added yet"
+else
+    echo "Workspace not initialized - run 'catkin init' to start"
+fi
 
 echo ""
 echo "🚀 Ready for ROS development!"
 echo "Try: roscore, rosrun turtlesim turtlesim_node, rviz"
+echo "💡 To build workspace: catkin build"
 echo ""
 
 # Execute the command passed to the container

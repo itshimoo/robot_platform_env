@@ -1,7 +1,7 @@
 {
   "name": "robotlab-webgui",
   "version": "1.0.0",
-  "description": "RobotLab Web GUI - Simple Docker-based ROS Environment Manager",
+  "description": "RobotLab Web GUI - Environment Manager",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
