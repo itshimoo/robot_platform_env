@@ -336,6 +336,15 @@ class DockerManager:
             
             full_image_name = f"{image_name}:{tag}"
             
+            # Check if image already exists locally
+            cmd_check = ['docker', 'images', '-q', full_image_name]
+            result = subprocess.run(cmd_check, capture_output=True, text=True)
+            
+            if result.stdout.strip():
+                print(f"✅ Image already exists locally: {full_image_name}")
+                print("💡 Use 'xr build' to rebuild the image if needed")
+                return True
+            
             print(f"🔄 Pulling Docker image: {full_image_name}")
             print("📥 Downloading latest version from registry...")
             
@@ -349,6 +358,11 @@ class DockerManager:
                 
         except subprocess.CalledProcessError as e:
             print(f"❌ Error pulling image: {e}")
+            print("💡 This might be because:")
+            print("   • The image doesn't exist in the registry yet")
+            print("   • You need to authenticate with the registry")
+            print("   • The registry URL is incorrect")
+            print("💡 Try building locally with 'xr build' instead")
             return False
         except Exception as e:
             print(f"❌ Exception during pull: {e}")
