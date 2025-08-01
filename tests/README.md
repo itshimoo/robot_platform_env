@@ -83,9 +83,9 @@ Each test class uses `setUp()` and `tearDown()` methods to:
 - Set up test environments
 - Clean up after tests
 
-## Continuous Integration
+## Test Quality
 
-These tests can be integrated into CI/CD pipelines to ensure code quality and prevent regressions.
+These tests ensure code quality and help prevent regressions.
 
 ## Adding New Tests
 

@@ -246,6 +246,8 @@ def gpu_command(config: ConfigManager, docker_mgr: DockerManager):
         print("💡 Container not running - GPU setting will apply on next 'rpe run'")
 
 
+
+
 def rviz_command(config: ConfigManager, docker_mgr: DockerManager):
     """Run RViz in the container with X11 forwarding"""
     print("🎯 Starting RViz with X11 forwarding...")
@@ -261,9 +263,9 @@ def rviz_command(config: ConfigManager, docker_mgr: DockerManager):
         print("❌ X11 display not available. Please ensure you're running in a GUI environment.")
         return False
     
-    # Allow X11 connections from container
-    print("🔓 Allowing X11 connections from container...")
-    subprocess.run(['xhost', '+local:'], check=True)
+    # Set up X11 permissions using Docker manager
+    if not docker_mgr.setup_x11_permissions():
+        return False
     
     # Run RViz in the container
     container_name = config.get('DOCKER_CONTAINER_NAME', 'robotlab-container')
@@ -285,6 +287,50 @@ def rviz_command(config: ConfigManager, docker_mgr: DockerManager):
     except KeyboardInterrupt:
         print("\n🛑 RViz stopped by user")
         return True
+
+
+def gazebo_command(config: ConfigManager, docker_mgr: DockerManager):
+    """Run Gazebo in the container with X11 forwarding"""
+    print("🌍 Starting Gazebo with X11 forwarding...")
+    
+    # Check if container is running
+    status = docker_mgr.get_container_status()
+    if not status.get('running', False):
+        print("❌ Container is not running. Please start it first with 'rpe run'")
+        return False
+    
+    # Check if X11 is available
+    if not os.environ.get('DISPLAY'):
+        print("❌ X11 display not available. Please ensure you're running in a GUI environment.")
+        return False
+    
+    # Set up X11 permissions using Docker manager
+    if not docker_mgr.setup_x11_permissions():
+        return False
+    
+    # Run Gazebo in the container
+    container_name = config.get('DOCKER_CONTAINER_NAME', 'robotlab-container')
+    display = os.environ.get('DISPLAY', ':0')
+    cmd = [
+        'docker', 'exec', '-it',
+        '-e', f'DISPLAY={display}',
+        container_name,
+        'bash', '-c', 'source /opt/ros/noetic/setup.bash && gazebo'
+    ]
+    
+    try:
+        print("🚀 Launching Gazebo...")
+        subprocess.run(cmd, check=True)
+        return True
+    except subprocess.CalledProcessError as e:
+        print(f"❌ Failed to start Gazebo: {e}")
+        return False
+    except KeyboardInterrupt:
+        print("\n🛑 Gazebo stopped by user")
+        return True
+
+
+
 
 
 def workspace_command(config: ConfigManager, docker_mgr: DockerManager, args):
@@ -399,7 +445,7 @@ Examples:
     )
     
     parser.add_argument('command', nargs='?', choices=[
-        'build', 'run', 'stop', 'status', 'logs', 'shell', 'webgui', 'config', 'update', 'clean', 'gpu', 'rviz', 'workspace'
+        'build', 'run', 'stop', 'status', 'logs', 'shell', 'webgui', 'config', 'update', 'clean', 'gpu', 'rviz', 'gazebo', 'workspace'
     ], help='Command to execute')
     
     parser.add_argument('args', nargs='*', help='Additional arguments for the command')
@@ -441,6 +487,8 @@ Examples:
         gpu_command(config, docker_mgr)
     elif args.command == 'rviz':
         rviz_command(config, docker_mgr)
+    elif args.command == 'gazebo':
+        gazebo_command(config, docker_mgr)
     elif args.command == 'workspace':
         workspace_command(config, docker_mgr, args.args)
     else:

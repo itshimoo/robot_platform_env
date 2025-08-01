@@ -25,6 +25,17 @@ RUN apt-get update && apt-get install -y \
     htop \
     tree \
     tmux \
+    # X11 and GUI support
+    x11-apps \
+    x11-utils \
+    libx11-dev \
+    libxext-dev \
+    libxrender-dev \
+    libxrandr-dev \
+    libxinerama-dev \
+    libxi-dev \
+    libxss-dev \
+    libxtst-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install ROS packages and tools
@@ -40,6 +51,13 @@ RUN apt-get update && apt-get install -y \
     ros-${ROS_DISTRO}-tf2 \
     ros-${ROS_DISTRO}-tf2-ros \
     ros-${ROS_DISTRO}-tf2-geometry-msgs \
+    # Gazebo and simulation packages
+    ros-${ROS_DISTRO}-gazebo-ros-pkgs \
+    ros-${ROS_DISTRO}-gazebo-ros-control \
+    ros-${ROS_DISTRO}-gazebo-plugins \
+    ros-${ROS_DISTRO}-gazebo-dev \
+    ros-${ROS_DISTRO}-gazebo-msgs \
+    ros-${ROS_DISTRO}-gazebo-ros \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python packages for development

@@ -1,0 +1,132 @@
+name: Build and Publish Docker Images
+
+on:
+  push:
+    branches: [ main, develop ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Image tag to build'
+        required: false
+        default: 'latest'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    - name: Build and push RobotLab ROS image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Build and push RobotLab ROS with GUI support
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile
+        push: true
+        tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:gui-${{ steps.meta.outputs.version }}
+        labels: ${{ steps.meta.outputs.labels }}
+        build-args: |
+          GUI_ENABLED=true
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Build and push RobotLab ROS with GPU support
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile
+        push: true
+        tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:gpu-${{ steps.meta.outputs.version }}
+        labels: ${{ steps.meta.outputs.labels }}
+        build-args: |
+          GPU_ENABLED=true
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Build and push RobotLab ROS with full support
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile
+        push: true
+        tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:full-${{ steps.meta.outputs.version }}
+        labels: ${{ steps.meta.outputs.labels }}
+        build-args: |
+          GUI_ENABLED=true
+          GPU_ENABLED=true
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Generate image summary
+      run: |
+        echo "## 🐳 Docker Images Published" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "The following Docker images have been built and published to GitHub Container Registry:" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Available Tags:" >> $GITHUB_STEP_SUMMARY
+        echo "- \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest\` - Latest stable version" >> $GITHUB_STEP_SUMMARY
+        echo "- \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:gui-${{ steps.meta.outputs.version }}\` - With GUI support" >> $GITHUB_STEP_SUMMARY
+        echo "- \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:gpu-${{ steps.meta.outputs.version }}\` - With GPU support" >> $GITHUB_STEP_SUMMARY
+        echo "- \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:full-${{ steps.meta.outputs.version }}\` - With GUI and GPU support" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Usage:" >> $GITHUB_STEP_SUMMARY
+        echo "```bash" >> $GITHUB_STEP_SUMMARY
+        echo "# Pull the latest image" >> $GITHUB_STEP_SUMMARY
+        echo "docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "# Run with GUI support" >> $GITHUB_STEP_SUMMARY
+        echo "docker run -it --rm \\" >> $GITHUB_STEP_SUMMARY
+        echo "  -e DISPLAY=\$DISPLAY \\" >> $GITHUB_STEP_SUMMARY
+        echo "  -v /tmp/.X11-unix:/tmp/.X11-unix \\" >> $GITHUB_STEP_SUMMARY
+        echo "  ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:gui-${{ steps.meta.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "# Run with GPU support" >> $GITHUB_STEP_SUMMARY
+        echo "docker run -it --rm \\" >> $GITHUB_STEP_SUMMARY
+        echo "  --gpus all \\" >> $GITHUB_STEP_SUMMARY
+        echo "  ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:gpu-${{ steps.meta.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+        echo "```" >> $GITHUB_STEP_SUMMARY 
