@@ -73,6 +73,12 @@ def run_command(config: ConfigManager, docker_mgr: DockerManager):
     if success:
         print("✅ Container started successfully")
         print(f"Container accessible on port {config.get('DOCKER_PORT', 8080)}")
+        
+        # Show GPU status if enabled
+        if config.get('GPU_ENABLED', False):
+            print("🚀 GPU support enabled - AI workloads ready")
+        else:
+            print("💻 CPU-only mode - GPU disabled")
     else:
         print("❌ Failed to start container")
         sys.exit(1)
@@ -167,6 +173,14 @@ def config_command(config: ConfigManager):
     print("Robot Platform Environment Configuration:")
     print("=" * 30)
     
+    # Show GPU status prominently
+    gpu_enabled = config.get('GPU_ENABLED', False)
+    if gpu_enabled:
+        print("🚀 GPU Support: ENABLED (AI workloads ready)")
+    else:
+        print("💻 GPU Support: DISABLED (CPU-only mode)")
+    print()
+    
     all_config = config.get_all()
     for key, value in all_config.items():
         print(f"{key}: {value}")
@@ -201,6 +215,35 @@ def update_command(config: ConfigManager, docker_mgr: DockerManager):
     print("  • Run 'robocmd build' to rebuild with new settings")
     print("  • Run 'robocmd run' to start container with new config")
     print("  • Run 'robocmd config' to verify settings")
+
+
+def gpu_command(config: ConfigManager, docker_mgr: DockerManager):
+    """Toggle GPU support on/off"""
+    print("🔄 Toggling GPU support...")
+    
+    # Get current GPU status
+    current_gpu = config.get('GPU_ENABLED', False)
+    new_gpu = not current_gpu
+    
+    # Update the configuration
+    config.set('GPU_ENABLED', new_gpu)
+    config.save_config()
+    
+    # Show status
+    if new_gpu:
+        print("🚀 GPU Support: ENABLED (AI workloads ready)")
+    else:
+        print("💻 GPU Support: DISABLED (CPU-only mode)")
+    
+    # Check if container is running and restart if needed
+    status = docker_mgr.get_container_status()
+    if status.get('running', False):
+        print("🔄 Restarting container with new GPU setting...")
+        docker_mgr.stop_container()
+        docker_mgr.run_container()
+        print("✅ Container restarted with new GPU configuration")
+    else:
+        print("💡 Container not running - GPU setting will apply on next 'rpe run'")
 
 
 def clean_command(config: ConfigManager, docker_mgr: DockerManager):
@@ -252,11 +295,12 @@ Examples:
   {cli_command}-webgui         Start web GUI
   {cli_command}-update         Update configuration from platform.env
   {cli_command}-clean          Clean up container and images
+  {cli_command}-gpu            Toggle GPU support on/off
         """
     )
     
     parser.add_argument('command', nargs='?', choices=[
-        'build', 'run', 'stop', 'status', 'logs', 'shell', 'webgui', 'config', 'update', 'clean'
+        'build', 'run', 'stop', 'status', 'logs', 'shell', 'webgui', 'config', 'update', 'clean', 'gpu'
     ], help='Command to execute')
     
     parser.add_argument('-n', '--lines', type=int, default=50, 
@@ -292,6 +336,8 @@ Examples:
         update_command(config, docker_mgr)
     elif args.command == 'clean':
         clean_command(config, docker_mgr)
+    elif args.command == 'gpu':
+        gpu_command(config, docker_mgr)
     else:
         print(f"Unknown command: {args.command}")
         sys.exit(1)

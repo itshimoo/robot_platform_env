@@ -178,7 +178,8 @@ CMD ["bash"]
             'DOCKER_CONTAINER_NAME',
             'DOCKER_TAG',
             'DOCKER_PORT',
-            'DOCKER_VOLUME_PATH'
+            'DOCKER_VOLUME_PATH',
+            'GPU_ENABLED'
         ]
         
         for key in docker_keys:

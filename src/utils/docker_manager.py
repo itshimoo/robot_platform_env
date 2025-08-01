@@ -7,7 +7,7 @@ Manages Docker container operations and status monitoring
 import os
 import subprocess
 import json
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 from .config_manager import ConfigManager
 
 
@@ -67,14 +67,20 @@ class DockerManager:
             
             # Check if container already exists and remove it
             status = self.get_container_status()
-            if status.get('name') and status.get('name') != 'Unknown':
-                print(f"Container {container_name} already exists. Removing it first...")
+            if (status.get('name') and 
+                status.get('name') != 'Unknown'):
+                print(f"Container {container_name} already exists. "
+                      f"Removing it first...")
                 self.remove_container()
             
             print(f"Starting container: {container_name}")
             
             # Get hostname from config or use container name as fallback
-            hostname = self.docker_config.get('CONTAINER_HOSTNAME', container_name)
+            hostname = self.docker_config.get('CONTAINER_HOSTNAME', 
+                                            container_name)
+            
+            # Check if GPU should be enabled
+            gpu_enabled = self.docker_config.get('GPU_ENABLED', False)
             
             cmd = [
                 'docker', 'run',
@@ -83,9 +89,18 @@ class DockerManager:
                 '--hostname', hostname,
                 '-p', f"{port}:{port}",
                 '-v', f"{os.getcwd()}:{self.docker_config.get('DOCKER_VOLUME_PATH', '/workspace')}",
+            ]
+            
+            # Add GPU support if enabled
+            if gpu_enabled:
+                print("🚀 GPU support enabled - adding NVIDIA runtime")
+                cmd.extend(['--runtime', 'nvidia'])
+                cmd.extend(['--gpus', 'all'])
+            
+            cmd.extend([
                 full_image_name,
                 'tail', '-f', '/dev/null'  # Keep container running
-            ]
+            ])
             
             result = subprocess.run(cmd, capture_output=True, text=True)
             
