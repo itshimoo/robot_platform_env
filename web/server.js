@@ -20,7 +20,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 function runPythonCommand(command, args = []) {
     return new Promise((resolve, reject) => {
         const pythonPath = path.join(__dirname, '..', 'src');
-        const scriptPath = path.join(__dirname, '..', 'rpe');
+        const scriptPath = path.join(__dirname, '..', 'bin', 'rpe');
         
         const childProcess = spawn('python3', [scriptPath, command, ...args], {
             cwd: path.join(__dirname, '..'),
@@ -86,6 +86,15 @@ app.post('/api/run', async (req, res) => {
 app.post('/api/stop', async (req, res) => {
     try {
         const output = await runPythonCommand('stop');
+        res.json({ success: true, data: output });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+app.post('/api/clean', async (req, res) => {
+    try {
+        const output = await runPythonCommand('clean');
         res.json({ success: true, data: output });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });

@@ -60,6 +60,13 @@ class ConfigManager:
         except Exception as e:
             print(f"Error loading configuration: {e}")
     
+    def reload_config(self) -> None:
+        """Reload configuration from platform.env file"""
+        # Clear existing config
+        self.config.clear()
+        # Reload from file
+        self.load_config()
+    
     def get(self, key: str, default: Any = None) -> Any:
         """Get configuration value"""
         return self.config.get(key, default)

@@ -1,0 +1,3 @@
+#!/bin/bash
+# RobotLab build command
+exec "$(dirname "$0")/rpe" build "$@" 

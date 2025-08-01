@@ -13,7 +13,9 @@ from pathlib import Path
 # Resolve the actual script location (handles symlinks)
 script_path = Path(__file__).resolve()
 current_dir = script_path.parent
-src_dir = current_dir / "src"
+# Since we're in bin/, go up one level to find src/
+project_dir = current_dir.parent
+src_dir = project_dir / "src"
 sys.path.insert(0, str(src_dir))
 
 # Set PYTHONPATH environment variable
@@ -27,7 +29,9 @@ def setup_environment():
     """Setup environment for CLI execution"""
     # Set PYTHONPATH to include the src directory
     current_dir = Path(__file__).parent
-    src_dir = current_dir / "src"
+    # Since we're in bin/, go up one level to find src/
+    project_dir = current_dir.parent
+    src_dir = project_dir / "src"
     python_path = os.environ.get('PYTHONPATH', '')
     if str(src_dir) not in python_path:
         os.environ['PYTHONPATH'] = f"{src_dir}:{python_path}"
@@ -143,7 +147,10 @@ def webgui_command(config: ConfigManager):
         sys.exit(1)
     
     # Start the web GUI
-    webgui_script = current_dir / "rpe-webgui.py"
+    # Get project directory (go up from bin/)
+    script_path = Path(__file__).resolve()
+    project_dir = script_path.parent.parent
+    webgui_script = project_dir / "web" / "rpe-webgui.py"
     if webgui_script.exists():
         try:
             subprocess.run([sys.executable, str(webgui_script)], check=True)
@@ -165,6 +172,62 @@ def config_command(config: ConfigManager):
         print(f"{key}: {value}")
 
 
+def update_command(config: ConfigManager, docker_mgr: DockerManager):
+    """Update environment configuration from platform.env"""
+    print("🔄 Updating Robot Platform Environment configuration...")
+    
+    # Reload configuration from platform.env
+    config_file = "platform.env"
+    if not os.path.exists(config_file):
+        print(f"❌ Configuration file '{config_file}' not found!")
+        sys.exit(1)
+    
+    print(f"📖 Reading configuration from {config_file}")
+    
+    # Reload the configuration
+    config.reload_config()
+    
+    print("✅ Configuration updated successfully!")
+    print("")
+    print("📋 Current configuration:")
+    print("=" * 30)
+    
+    all_config = config.get_all()
+    for key, value in all_config.items():
+        print(f"{key}: {value}")
+    
+    print("")
+    print("💡 Next steps:")
+    print("  • Run 'robocmd build' to rebuild with new settings")
+    print("  • Run 'robocmd run' to start container with new config")
+    print("  • Run 'robocmd config' to verify settings")
+
+
+def clean_command(config: ConfigManager, docker_mgr: DockerManager):
+    """Clean up Docker container and images"""
+    print("🧹 Cleaning up Robot Platform Environment...")
+    
+    # Stop container if running
+    print("Stopping container if running...")
+    docker_mgr.stop_container()
+    
+    # Remove container
+    print("Removing container...")
+    success = docker_mgr.remove_container()
+    
+    if success:
+        print("✅ Container removed successfully")
+    else:
+        print("⚠️  Container was already removed or doesn't exist")
+    
+    # Optionally remove images (commented out for safety)
+    # print("Removing Docker images...")
+    # docker_mgr.cleanup_images()
+    
+    print("✅ Cleanup completed!")
+    print("💡 Run 'robocmd build' to rebuild the container")
+
+
 def main():
     """Main CLI entry point"""
     setup_environment()
@@ -180,43 +243,24 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=f"""
 Examples:
-  {cli_command} build          Build Docker image
-  {cli_command} run            Start container
-  {cli_command} stop           Stop container
-  {cli_command} status         Show container status
-  {cli_command} logs           Show container logs
-  {cli_command} shell          Shell into container
-  {cli_command} webgui         Start web GUI
+  {cli_command}-build          Build Docker image
+  {cli_command}-run            Start container
+  {cli_command}-stop           Stop container
+  {cli_command}-status         Show container status
+  {cli_command}-logs           Show container logs
+  {cli_command}-shell          Shell into container
+  {cli_command}-webgui         Start web GUI
+  {cli_command}-update         Update configuration from platform.env
+  {cli_command}-clean          Clean up container and images
         """
     )
     
-    subparsers = parser.add_subparsers(dest='command', help='Available commands')
+    parser.add_argument('command', nargs='?', choices=[
+        'build', 'run', 'stop', 'status', 'logs', 'shell', 'webgui', 'config', 'update', 'clean'
+    ], help='Command to execute')
     
-    # Build command
-    subparsers.add_parser('build', help='Build Docker image')
-    
-    # Run command
-    subparsers.add_parser('run', help='Start container')
-    
-    # Stop command
-    subparsers.add_parser('stop', help='Stop container')
-    
-    # Status command
-    subparsers.add_parser('status', help='Show container status')
-    
-    # Logs command
-    logs_parser = subparsers.add_parser('logs', help='Show container logs')
-    logs_parser.add_argument('-n', '--lines', type=int, default=50, 
-                           help='Number of lines to show (default: 50)')
-    
-    # Shell command
-    subparsers.add_parser('shell', help='Shell into container')
-    
-    # Web GUI command
-    subparsers.add_parser('webgui', help='Start web GUI')
-    
-    # Config command
-    subparsers.add_parser('config', help='Show configuration')
+    parser.add_argument('-n', '--lines', type=int, default=50, 
+                       help='Number of lines to show for logs (default: 50)')
     
     args = parser.parse_args()
     
@@ -244,6 +288,10 @@ Examples:
         webgui_command(config)
     elif args.command == 'config':
         config_command(config)
+    elif args.command == 'update':
+        update_command(config, docker_mgr)
+    elif args.command == 'clean':
+        clean_command(config, docker_mgr)
     else:
         print(f"Unknown command: {args.command}")
         sys.exit(1)

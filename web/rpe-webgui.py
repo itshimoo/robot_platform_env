@@ -13,7 +13,9 @@ from pathlib import Path
 
 # Add the src directory to Python path for imports
 current_dir = Path(__file__).parent
-src_dir = current_dir / "src"
+# Since we're in web/, go up one level to find src/
+project_dir = current_dir.parent
+src_dir = project_dir / "src"
 sys.path.insert(0, str(src_dir))
 
 from utils.config_manager import ConfigManager
@@ -41,8 +43,8 @@ def check_npm():
 
 def install_dependencies():
     """Install Node.js dependencies"""
-    web_dir = current_dir / "web"
-    package_json = web_dir / "package.json"
+    # current_dir is already the web directory
+    package_json = current_dir / "package.json"
     
     if not package_json.exists():
         print("❌ package.json not found in web directory")
@@ -50,7 +52,7 @@ def install_dependencies():
     
     print("Installing Node.js dependencies...")
     try:
-        subprocess.run(['npm', 'install'], cwd=web_dir, check=True)
+        subprocess.run(['npm', 'install'], cwd=current_dir, check=True)
         print("✅ Dependencies installed successfully")
         return True
     except subprocess.CalledProcessError as e:
@@ -60,29 +62,25 @@ def install_dependencies():
 
 def start_server(config: ConfigManager):
     """Start the web server"""
-    web_dir = current_dir / "web"
-    server_script = web_dir / "server.js"
+    # current_dir is already the web directory
+    server_script = current_dir / "server.js"
     
     if not server_script.exists():
         print("❌ server.js not found in web directory")
         return False
     
-    # Get configuration
-    port = config.get('WEB_PORT', 3000)
-    host = config.get('WEB_HOST', 'localhost')
-    
-    print(f"Starting Robot Platform Environment Web GUI on http://{host}:{port}")
+    print("Starting Robot Platform Environment Web GUI on http://localhost:3000")
     print("Press Ctrl+C to stop the server")
     
     try:
         # Start the server
         process = subprocess.Popen(
             ['node', 'server.js'],
-            cwd=web_dir,
+            cwd=current_dir,
             env={
                 **os.environ,
-                'PORT': str(port),
-                'HOST': host
+                'PORT': '3000',
+                'HOST': 'localhost'
             }
         )
         
@@ -124,8 +122,8 @@ def main():
         sys.exit(1)
     
     # Install dependencies if needed
-    web_dir = current_dir / "web"
-    node_modules = web_dir / "node_modules"
+    # current_dir is already the web directory
+    node_modules = current_dir / "node_modules"
     
     if not node_modules.exists():
         if not install_dependencies():

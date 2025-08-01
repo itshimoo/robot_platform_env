@@ -94,9 +94,9 @@ main() {
     echo ""
     
     # Check if we're in the right directory
-    if [ ! -f "scripts/setup.sh" ] || [ ! -f "scripts/env-setup.sh" ]; then
+    if [ ! -f "scripts/setup.sh" ] || [ ! -f "scripts/env-setup.sh" ] || [ ! -f "bin/rpe" ]; then
         print_warning "Error: Please run this script from the Robot Platform Environment project directory"
-        echo "Make sure you're in the directory containing the 'scripts' folder"
+        echo "Make sure you're in the directory containing the 'scripts' and 'bin' folders"
         exit 1
     fi
     

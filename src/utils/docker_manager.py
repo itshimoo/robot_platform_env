@@ -27,6 +27,11 @@ class DockerManager:
             full_image_name = f"{image_name}:{tag}"
             
             print(f"Building Docker image: {full_image_name}")
+            print("🚀 Using Docker BuildKit for faster builds...")
+            
+            # Set BuildKit environment variable for this build
+            env = os.environ.copy()
+            env['DOCKER_BUILDKIT'] = '1'
             
             cmd = [
                 'docker', 'build', 
@@ -35,17 +40,17 @@ class DockerManager:
                 '.'
             ]
             
-            result = subprocess.run(cmd, capture_output=True, text=True)
+            # Run docker build with BuildKit enabled and real-time output
+            subprocess.run(cmd, check=True, env=env)
             
-            if result.returncode == 0:
-                print(f"Successfully built image: {full_image_name}")
-                return True
-            else:
-                print(f"Error building image: {result.stderr}")
-                return False
+            print(f"✅ Successfully built image: {full_image_name}")
+            return True
                 
+        except subprocess.CalledProcessError as e:
+            print(f"❌ Error building image: {e}")
+            return False
         except Exception as e:
-            print(f"Exception during build: {e}")
+            print(f"❌ Exception during build: {e}")
             return False
     
     def run_container(self, port: Optional[int] = None) -> bool:
@@ -68,10 +73,14 @@ class DockerManager:
             
             print(f"Starting container: {container_name}")
             
+            # Get hostname from config or use container name as fallback
+            hostname = self.docker_config.get('CONTAINER_HOSTNAME', container_name)
+            
             cmd = [
                 'docker', 'run',
                 '-d',  # detached mode
                 '--name', container_name,
+                '--hostname', hostname,
                 '-p', f"{port}:{port}",
                 '-v', f"{os.getcwd()}:{self.docker_config.get('DOCKER_VOLUME_PATH', '/workspace')}",
                 full_image_name,
@@ -99,17 +108,18 @@ class DockerManager:
             print(f"Stopping container: {container_name}")
             
             cmd = ['docker', 'stop', container_name]
-            result = subprocess.run(cmd, capture_output=True, text=True)
             
-            if result.returncode == 0:
-                print(f"Successfully stopped container: {container_name}")
-                return True
-            else:
-                print(f"Error stopping container: {result.stderr}")
-                return False
+            # Run docker stop with real-time output
+            subprocess.run(cmd, check=True)
+            
+            print(f"✅ Successfully stopped container: {container_name}")
+            return True
                 
+        except subprocess.CalledProcessError as e:
+            print(f"❌ Error stopping container: {e}")
+            return False
         except Exception as e:
-            print(f"Exception during container stop: {e}")
+            print(f"❌ Exception during container stop: {e}")
             return False
     
     def remove_container(self) -> bool:
@@ -120,17 +130,18 @@ class DockerManager:
             print(f"Removing container: {container_name}")
             
             cmd = ['docker', 'rm', container_name]
-            result = subprocess.run(cmd, capture_output=True, text=True)
             
-            if result.returncode == 0:
-                print(f"Successfully removed container: {container_name}")
-                return True
-            else:
-                print(f"Error removing container: {result.stderr}")
-                return False
+            # Run docker rm with real-time output
+            subprocess.run(cmd, check=True)
+            
+            print(f"✅ Successfully removed container: {container_name}")
+            return True
                 
+        except subprocess.CalledProcessError as e:
+            print(f"❌ Error removing container: {e}")
+            return False
         except Exception as e:
-            print(f"Exception during container removal: {e}")
+            print(f"❌ Exception during container removal: {e}")
             return False
     
     def get_container_status(self) -> Dict[str, any]:

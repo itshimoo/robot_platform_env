@@ -1,0 +1,3 @@
+#!/bin/bash
+# RobotLab webgui command
+exec "$(dirname "$0")/rpe" webgui "$@" 

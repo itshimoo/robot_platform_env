@@ -1,0 +1,3 @@
+#!/bin/bash
+# RobotLab status command
+exec "$(dirname "$0")/rpe" status "$@" 

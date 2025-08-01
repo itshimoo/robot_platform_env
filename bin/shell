@@ -1,0 +1,3 @@
+#!/bin/bash
+# RobotLab shell command
+exec "$(dirname "$0")/rpe" shell "$@" 
