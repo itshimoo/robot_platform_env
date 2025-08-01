@@ -329,20 +329,12 @@ class DockerManager:
         try:
             # Use configured values if not provided
             if image_name is None:
-                image_name = 'robotlab-ros'  # Default image name
+                # Try to get from config, fallback to default
+                image_name = self.docker_config.get('DOCKER_IMAGE_NAME', 'robotlab-ros')
             if tag is None:
                 tag = self.docker_config.get('DOCKER_TAG', 'latest')
             
             full_image_name = f"{image_name}:{tag}"
-            
-            # Check if image already exists locally
-            cmd_check = ['docker', 'images', '-q', full_image_name]
-            result = subprocess.run(cmd_check, capture_output=True, text=True)
-            
-            if result.stdout.strip():
-                print(f"✅ Image already exists locally: {full_image_name}")
-                print("💡 Use 'xr build' to rebuild the image if needed")
-                return True
             
             print(f"🔄 Pulling Docker image: {full_image_name}")
             print("📥 Downloading latest version from registry...")

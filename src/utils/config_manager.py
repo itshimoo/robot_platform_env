@@ -172,6 +172,7 @@ CMD ["bash"]
         """Get Docker-specific configuration"""
         docker_config = {}
         docker_keys = [
+            'DOCKER_IMAGE_NAME',
             'DOCKER_TAG',
             'GPU_ENABLED'
         ]
