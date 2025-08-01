@@ -1,8 +1,21 @@
-// Simple RobotLab Web GUI
+// Professional RobotLab Web GUI
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('RobotLab Web GUI loaded');
+    console.log('🤖 RobotLab Web GUI loaded');
     
-    // Simple API functions
+    // Add loading animation
+    function showLoading(element) {
+        element.innerHTML = '<div class="loading"></div> Loading...';
+    }
+    
+    // Add success animation
+    function showSuccess(element, message) {
+        element.innerHTML = `<span class="status-indicator success"></span> ${message}`;
+        setTimeout(() => {
+            updateStatus();
+        }, 1000);
+    }
+    
+    // Professional API functions
     async function apiCall(endpoint, method = 'GET', data = null) {
         try {
             const options = {
@@ -25,34 +38,40 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Update status display
+    // Update status display with professional styling
     async function updateStatus() {
-        const result = await apiCall('status');
         const statusDiv = document.getElementById('status');
+        showLoading(statusDiv);
+        
+        const result = await apiCall('status');
         
         if (result.success) {
             statusDiv.innerHTML = `<pre>${result.data}</pre>`;
         } else {
-            statusDiv.innerHTML = `<p class="error">Error: ${result.error}</p>`;
+            statusDiv.innerHTML = `<p class="error">❌ Error: ${result.error}</p>`;
         }
     }
 
-    // Update configuration display
+    // Update configuration display with professional styling
     async function updateConfig() {
-        const result = await apiCall('config');
         const configDiv = document.getElementById('config');
+        showLoading(configDiv);
+        
+        const result = await apiCall('config');
         
         if (result.success) {
             configDiv.innerHTML = `<pre>${result.data}</pre>`;
         } else {
-            configDiv.innerHTML = `<p class="error">Error: ${result.error}</p>`;
+            configDiv.innerHTML = `<p class="error">❌ Error: ${result.error}</p>`;
         }
     }
 
-    // Update GPU status
+    // Update GPU status with professional styling
     async function updateGPUStatus() {
-        const result = await apiCall('config');
         const gpuStatusDiv = document.getElementById('gpu-status');
+        showLoading(gpuStatusDiv);
+        
+        const result = await apiCall('config');
         
         if (result.success) {
             // Extract GPU status from config output
@@ -60,24 +79,38 @@ document.addEventListener('DOMContentLoaded', function() {
             const gpuDisabled = result.data.includes('💻 GPU Support: DISABLED');
             
             if (gpuEnabled) {
-                gpuStatusDiv.innerHTML = `<p style="color: #28a745;">🚀 GPU Support: ENABLED (AI workloads ready)</p>`;
+                gpuStatusDiv.innerHTML = `<p style="color: var(--success-color); font-weight: 600;">🚀 GPU Support: ENABLED (AI workloads ready)</p>`;
             } else if (gpuDisabled) {
-                gpuStatusDiv.innerHTML = `<p style="color: #6c757d;">💻 GPU Support: DISABLED (CPU-only mode)</p>`;
+                gpuStatusDiv.innerHTML = `<p style="color: var(--text-secondary); font-weight: 600;">💻 GPU Support: DISABLED (CPU-only mode)</p>`;
             } else {
                 gpuStatusDiv.innerHTML = `<p>Loading GPU status...</p>`;
             }
         } else {
-            gpuStatusDiv.innerHTML = `<p class="error">Error: ${result.error}</p>`;
+            gpuStatusDiv.innerHTML = `<p class="error">❌ Error: ${result.error}</p>`;
         }
     }
     
     // Button click handlers
     window.buildContainer = async function() {
+        const button = event.target;
+        const originalText = button.innerHTML;
+        button.innerHTML = '<div class="loading"></div> Building...';
+        button.disabled = true;
+        
         const result = await apiCall('build', 'POST');
         if (result.success) {
-            alert('Build completed successfully!');
+            button.innerHTML = '<span class="status-indicator success"></span> Build Complete';
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }, 2000);
             updateStatus();
         } else {
+            button.innerHTML = '<span class="status-indicator danger"></span> Build Failed';
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }, 3000);
             alert('Build failed: ' + result.error);
         }
     };
@@ -113,13 +146,27 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     window.toggleGPU = async function() {
+        const button = event.target;
+        const originalText = button.innerHTML;
+        button.innerHTML = '<div class="loading"></div> Toggling...';
+        button.disabled = true;
+        
         const result = await apiCall('gpu', 'POST');
         if (result.success) {
-            alert('GPU toggled successfully!');
+            button.innerHTML = '<span class="status-indicator success"></span> GPU Toggled';
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }, 2000);
             updateStatus();
             updateGPUStatus();
             updateConfig();
         } else {
+            button.innerHTML = '<span class="status-indicator danger"></span> Toggle Failed';
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }, 3000);
             alert('Failed to toggle GPU: ' + result.error);
         }
     };
