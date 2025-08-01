@@ -27,7 +27,6 @@ yarn-debug.log*
 yarn-error.log*
 
 # Docker
-Dockerfile
 *.env
 .env
 
