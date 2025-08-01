@@ -16,10 +16,33 @@ Robot Platform Environment is a comprehensive system for managing Docker-based R
 - **Modular Architecture**: Separated concerns with specialized managers
 - **Simulation Support**: Integrated Gazebo simulation environment with ROS
 - **GUI Applications**: RViz, Gazebo, and other ROS GUI tools with X11 forwarding
+- **Automated Docker Builds**: GitHub Actions workflow for automated image builds
+- **Pre-built Images**: Pull ready-to-use images from GitHub Container Registry
 
 ## Quick Start
 
-### Prerequisites
+### Option 1: Use Pre-built Images (Recommended)
+
+The fastest way to get started is using pre-built Docker images:
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd robot_platform_env
+
+# Pull pre-built image
+./scripts/pull-prebuilt.sh latest full
+
+# Run the container
+docker run -it --rm \
+  -e DISPLAY=$DISPLAY \
+  -v /tmp/.X11-unix:/tmp/.X11-unix \
+  robotlab-ros:latest-full
+```
+
+### Option 2: Build Locally
+
+#### Prerequisites
 
 - Linux operating system
 - Docker installed and running
@@ -27,9 +50,7 @@ Robot Platform Environment is a comprehensive system for managing Docker-based R
 - Node.js 14+ (for web GUI)
 - Git
 
-### Installation
-
-#### Simple 3-Step Process
+#### Installation
 
 1. **Clone the repository:**
 ```bash
