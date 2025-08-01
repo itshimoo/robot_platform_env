@@ -324,6 +324,35 @@ class DockerManager:
         except FileNotFoundError:
             print("❌ xhost command not found. X11 may not be available.")
             return False
+    
+    def pull_image(self, image_name: Optional[str] = None, tag: Optional[str] = None) -> bool:
+        """Pull Docker image from registry"""
+        try:
+            # Use configured values if not provided
+            if image_name is None:
+                image_name = self.docker_config.get('DOCKER_IMAGE_NAME', 'robotlab-ros')
+            if tag is None:
+                tag = self.docker_config.get('DOCKER_TAG', 'latest')
+            
+            full_image_name = f"{image_name}:{tag}"
+            
+            print(f"🔄 Pulling Docker image: {full_image_name}")
+            print("📥 Downloading latest version from registry...")
+            
+            cmd = ['docker', 'pull', full_image_name]
+            
+            # Run docker pull with real-time output
+            subprocess.run(cmd, check=True)
+            
+            print(f"✅ Successfully pulled image: {full_image_name}")
+            return True
+                
+        except subprocess.CalledProcessError as e:
+            print(f"❌ Error pulling image: {e}")
+            return False
+        except Exception as e:
+            print(f"❌ Exception during pull: {e}")
+            return False
 
 
 def main():

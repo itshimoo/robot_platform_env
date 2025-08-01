@@ -181,7 +181,7 @@ install_robotlab() {
         
         # Install hyphenated command scripts
         print_status "Installing hyphenated commands..."
-        for cmd in build run stop status logs shell webgui config update clean gpu rviz gazebo workspace; do
+        for cmd in build run stop status logs shell webgui config update clean gpu rviz gazebo workspace pull; do
             if [ -f "$PROJECT_DIR/bin/$cmd" ]; then
                 ln -sf "$PROJECT_DIR/bin/$cmd" "$INSTALL_PATH/$CLI_COMMAND-$cmd"
                 print_success "Created hyphenated command: $INSTALL_PATH/$CLI_COMMAND-$cmd"

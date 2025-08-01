@@ -1,0 +1,47 @@
+#!/usr/bin/env python3
+"""
+Pull command for Robot Platform Environment
+"""
+
+import sys
+import os
+from pathlib import Path
+
+# Add the src directory to Python path for imports
+script_path = Path(__file__).resolve()
+current_dir = script_path.parent
+project_dir = current_dir.parent
+src_dir = project_dir / "src"
+sys.path.insert(0, str(src_dir))
+
+# Set PYTHONPATH environment variable
+os.environ['PYTHONPATH'] = f"{src_dir}:{os.environ.get('PYTHONPATH', '')}"
+
+from utils.config_manager import ConfigManager
+from utils.docker_manager import DockerManager
+
+
+def main():
+    """Pull latest Docker image"""
+    config = ConfigManager()
+    docker_mgr = DockerManager(config)
+    
+    print("📥 Pulling latest Robot Platform Environment image...")
+    
+    # Check if Docker is running
+    if not docker_mgr.is_docker_running():
+        print("❌ Docker is not running")
+        sys.exit(1)
+    
+    # Pull the latest image
+    success = docker_mgr.pull_image()
+    if success:
+        print("✅ Image pulled successfully")
+        print("💡 Run 'xr run' to start container with latest image")
+    else:
+        print("❌ Failed to pull image")
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main() 

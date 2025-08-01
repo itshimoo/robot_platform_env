@@ -414,6 +414,25 @@ def clean_command(config: ConfigManager, docker_mgr: DockerManager):
     print("💡 Run 'robocmd build' to rebuild the container")
 
 
+def pull_command(config: ConfigManager, docker_mgr: DockerManager):
+    """Pull latest Docker image from registry"""
+    print("📥 Pulling latest Robot Platform Environment image...")
+    
+    # Check if Docker is running
+    if not docker_mgr.is_docker_running():
+        print("❌ Docker is not running")
+        sys.exit(1)
+    
+    # Pull the latest image
+    success = docker_mgr.pull_image()
+    if success:
+        print("✅ Image pulled successfully")
+        print("💡 Run 'rpe run' to start container with latest image")
+    else:
+        print("❌ Failed to pull image")
+        sys.exit(1)
+
+
 def main():
     """Main CLI entry point"""
     setup_environment()
@@ -441,11 +460,12 @@ Examples:
   {cli_command}-gpu            Toggle GPU support on/off
   {cli_command}-rviz           Run RViz with X11 forwarding
   {cli_command}-workspace      Switch workspace directory
+  {cli_command}-pull           Pull latest image from registry
         """
     )
     
     parser.add_argument('command', nargs='?', choices=[
-        'build', 'run', 'stop', 'status', 'logs', 'shell', 'webgui', 'config', 'update', 'clean', 'gpu', 'rviz', 'gazebo', 'workspace'
+        'build', 'run', 'stop', 'status', 'logs', 'shell', 'webgui', 'config', 'update', 'clean', 'gpu', 'rviz', 'gazebo', 'workspace', 'pull'
     ], help='Command to execute')
     
     parser.add_argument('args', nargs='*', help='Additional arguments for the command')
@@ -491,6 +511,8 @@ Examples:
         gazebo_command(config, docker_mgr)
     elif args.command == 'workspace':
         workspace_command(config, docker_mgr, args.args)
+    elif args.command == 'pull':
+        pull_command(config, docker_mgr)
     else:
         print(f"Unknown command: {args.command}")
         sys.exit(1)
