@@ -75,12 +75,19 @@ class DockerManager:
             
             print(f"Starting container: {container_name}")
             
+            # Set up X11 permissions for GUI applications
+            if os.environ.get('DISPLAY'):
+                self.setup_x11_permissions()
+            
             # Get hostname from config or use container name as fallback
             hostname = self.docker_config.get('CONTAINER_HOSTNAME', 
                                             container_name)
             
             # Check if GPU should be enabled
             gpu_enabled = self.docker_config.get('GPU_ENABLED', False)
+            
+            # Get current DISPLAY value
+            display = os.environ.get('DISPLAY', ':0')
             
             cmd = [
                 'docker', 'run',
@@ -90,8 +97,10 @@ class DockerManager:
                 '-p', f"{port}:{port}",
                 '-v', f"{os.getcwd()}:{self.docker_config.get('WORKSPACE_PATH', '/workspace')}",
                 # X11 forwarding for GUI applications
-                '-e', 'DISPLAY=$DISPLAY',
+                '-e', f'DISPLAY={display}',
                 '-v', '/tmp/.X11-unix:/tmp/.X11-unix:rw',
+                # Additional X11 security settings
+                '--security-opt', 'label=type:container_runtime_t',
             ]
             
             # Add GPU support if enabled
@@ -300,6 +309,20 @@ class DockerManager:
             result = subprocess.run(cmd, capture_output=True, text=True)
             return result.returncode == 0
         except Exception:
+            return False
+    
+    def setup_x11_permissions(self) -> bool:
+        """Set up X11 permissions for GUI applications"""
+        try:
+            # Allow local connections to X server
+            subprocess.run(['xhost', '+local:'], check=True)
+            print("🔓 X11 permissions configured")
+            return True
+        except subprocess.CalledProcessError as e:
+            print(f"❌ Failed to set X11 permissions: {e}")
+            return False
+        except FileNotFoundError:
+            print("❌ xhost command not found. X11 may not be available.")
             return False
 
 

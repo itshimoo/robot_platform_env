@@ -25,6 +25,17 @@ RUN apt-get update && apt-get install -y \
     htop \
     tree \
     tmux \
+    # X11 and GUI support
+    x11-apps \
+    x11-utils \
+    libx11-dev \
+    libxext-dev \
+    libxrender-dev \
+    libxrandr-dev \
+    libxinerama-dev \
+    libxi-dev \
+    libxss-dev \
+    libxtst-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install ROS packages and tools
