@@ -287,6 +287,62 @@ def rviz_command(config: ConfigManager, docker_mgr: DockerManager):
         return True
 
 
+def workspace_command(config: ConfigManager, docker_mgr: DockerManager, args):
+    """Switch to a new workspace directory"""
+    
+    # Get the workspace path from command line arguments
+    if not args:
+        print("❌ Usage: robocmd workspace <path>")
+        print("💡 Example: robocmd workspace /path/to/my/workspace")
+        return False
+    
+    new_workspace = args[0]
+    
+    # Validate the workspace path
+    if not os.path.exists(new_workspace):
+        print(f"❌ Workspace path does not exist: {new_workspace}")
+        return False
+    
+    if not os.path.isdir(new_workspace):
+        print(f"❌ Path is not a directory: {new_workspace}")
+        return False
+    
+    print(f"🔄 Switching workspace to: {new_workspace}")
+    
+    # Check if container is running
+    status = docker_mgr.get_container_status()
+    container_running = status.get('running', False)
+    
+    if container_running:
+        print("🛑 Stopping container...")
+        docker_mgr.stop_container()
+        docker_mgr.remove_container()
+    
+    # Update the workspace path in configuration
+    config.set('WORKSPACE_PATH', new_workspace)
+    config.save_config()
+    
+    print(f"✅ Workspace path updated to: {new_workspace}")
+    
+    # Change to the new workspace directory
+    os.chdir(new_workspace)
+    print(f"📁 Changed to directory: {os.getcwd()}")
+    
+    # Start the container with the new workspace
+    print("🚀 Starting container with new workspace...")
+    success = docker_mgr.run_container()
+    
+    if success:
+        print("✅ Container started successfully with new workspace!")
+        print(f"📁 Workspace: {new_workspace}")
+        print(f"🔗 Container accessible on port {config.get('DOCKER_PORT', 8080)}")
+    else:
+        print("❌ Failed to start container with new workspace")
+        return False
+    
+    return True
+
+
 def clean_command(config: ConfigManager, docker_mgr: DockerManager):
     """Clean up Docker container and images"""
     print("🧹 Cleaning up Robot Platform Environment...")
@@ -338,12 +394,15 @@ Examples:
   {cli_command}-clean          Clean up container and images
   {cli_command}-gpu            Toggle GPU support on/off
   {cli_command}-rviz           Run RViz with X11 forwarding
+  {cli_command}-workspace      Switch workspace directory
         """
     )
     
     parser.add_argument('command', nargs='?', choices=[
-        'build', 'run', 'stop', 'status', 'logs', 'shell', 'webgui', 'config', 'update', 'clean', 'gpu', 'rviz'
+        'build', 'run', 'stop', 'status', 'logs', 'shell', 'webgui', 'config', 'update', 'clean', 'gpu', 'rviz', 'workspace'
     ], help='Command to execute')
+    
+    parser.add_argument('args', nargs='*', help='Additional arguments for the command')
     
     parser.add_argument('-n', '--lines', type=int, default=50, 
                        help='Number of lines to show for logs (default: 50)')
@@ -382,6 +441,8 @@ Examples:
         gpu_command(config, docker_mgr)
     elif args.command == 'rviz':
         rviz_command(config, docker_mgr)
+    elif args.command == 'workspace':
+        workspace_command(config, docker_mgr, args.args)
     else:
         print(f"Unknown command: {args.command}")
         sys.exit(1)
