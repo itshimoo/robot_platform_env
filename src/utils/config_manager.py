@@ -157,8 +157,6 @@ CMD ["bash"]
         """Validate configuration values"""
         required_keys = [
             'PROJECT_NAME',
-            'DOCKER_IMAGE_NAME',
-            'DOCKER_CONTAINER_NAME',
             'ROS_DISTRO'
         ]
         
@@ -174,11 +172,7 @@ CMD ["bash"]
         """Get Docker-specific configuration"""
         docker_config = {}
         docker_keys = [
-            'DOCKER_IMAGE_NAME',
-            'DOCKER_CONTAINER_NAME',
             'DOCKER_TAG',
-            'DOCKER_PORT',
-            'DOCKER_VOLUME_PATH',
             'GPU_ENABLED'
         ]
         

@@ -7,7 +7,7 @@ Manages Docker container operations and status monitoring
 import os
 import subprocess
 import json
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 from .config_manager import ConfigManager
 
 
@@ -22,7 +22,7 @@ class DockerManager:
     def build_image(self, dockerfile_path: str = "Dockerfile") -> bool:
         """Build Docker image"""
         try:
-            image_name = self.docker_config.get('DOCKER_IMAGE_NAME', 'robotlab-ros')
+            image_name = 'robotlab-ros'  # Default image name
             tag = self.docker_config.get('DOCKER_TAG', 'latest')
             full_image_name = f"{image_name}:{tag}"
             
@@ -56,14 +56,14 @@ class DockerManager:
     def run_container(self, port: Optional[int] = None) -> bool:
         """Run Docker container"""
         try:
-            container_name = self.docker_config.get('DOCKER_CONTAINER_NAME', 'robotlab-container')
-            image_name = self.docker_config.get('DOCKER_IMAGE_NAME', 'robotlab-ros')
+            container_name = 'robotlab-container'  # Default container name
+            image_name = 'robotlab-ros'  # Default image name
             tag = self.docker_config.get('DOCKER_TAG', 'latest')
             full_image_name = f"{image_name}:{tag}"
             
             # Use configured port or default
             if port is None:
-                port = self.docker_config.get('DOCKER_PORT', 8080)
+                port = 8080  # Default port
             
             # Check if container already exists and remove it
             status = self.get_container_status()
@@ -79,9 +79,8 @@ class DockerManager:
             if os.environ.get('DISPLAY'):
                 self.setup_x11_permissions()
             
-            # Get hostname from config or use container name as fallback
-            hostname = self.docker_config.get('CONTAINER_HOSTNAME', 
-                                            container_name)
+            # Use container name as hostname
+            hostname = container_name
             
             # Check if GPU should be enabled
             gpu_enabled = self.docker_config.get('GPU_ENABLED', False)
@@ -95,7 +94,7 @@ class DockerManager:
                 '--name', container_name,
                 '--hostname', hostname,
                 '-p', f"{port}:{port}",
-                '-v', f"{os.getcwd()}:{self.docker_config.get('WORKSPACE_PATH', '/workspace')}",
+                '-v', f"{os.getcwd()}:/workspace",
                 # X11 forwarding for GUI applications
                 '-e', f'DISPLAY={display}',
                 '-v', '/tmp/.X11-unix:/tmp/.X11-unix:rw',
@@ -130,7 +129,7 @@ class DockerManager:
     def stop_container(self) -> bool:
         """Stop Docker container"""
         try:
-            container_name = self.docker_config.get('DOCKER_CONTAINER_NAME', 'robotlab-container')
+            container_name = 'robotlab-container'  # Default container name
             
             print(f"Stopping container: {container_name}")
             
@@ -152,7 +151,7 @@ class DockerManager:
     def remove_container(self) -> bool:
         """Remove Docker container"""
         try:
-            container_name = self.docker_config.get('DOCKER_CONTAINER_NAME', 'robotlab-container')
+            container_name = 'robotlab-container'  # Default container name
             
             print(f"Removing container: {container_name}")
             
@@ -171,10 +170,10 @@ class DockerManager:
             print(f"❌ Exception during container removal: {e}")
             return False
     
-    def get_container_status(self) -> Dict[str, any]:
+    def get_container_status(self) -> Dict[str, Any]:
         """Get container status information"""
         try:
-            container_name = self.docker_config.get('DOCKER_CONTAINER_NAME', 'robotlab-container')
+            container_name = 'robotlab-container'  # Default container name
             
             cmd = [
                 'docker', 'ps', 
@@ -221,7 +220,7 @@ class DockerManager:
     def shell_into_container(self) -> bool:
         """Shell into running container"""
         try:
-            container_name = self.docker_config.get('DOCKER_CONTAINER_NAME', 'robotlab-container')
+            container_name = 'robotlab-container'  # Default container name
             
             cmd = [
                 'docker', 'exec', '-it',
@@ -242,7 +241,7 @@ class DockerManager:
     def get_logs(self, lines: int = 50) -> str:
         """Get container logs"""
         try:
-            container_name = self.docker_config.get('DOCKER_CONTAINER_NAME', 'robotlab-container')
+            container_name = 'robotlab-container'  # Default container name
             
             cmd = [
                 'docker', 'logs',
@@ -330,7 +329,7 @@ class DockerManager:
         try:
             # Use configured values if not provided
             if image_name is None:
-                image_name = self.docker_config.get('DOCKER_IMAGE_NAME', 'robotlab-ros')
+                image_name = 'robotlab-ros'  # Default image name
             if tag is None:
                 tag = self.docker_config.get('DOCKER_TAG', 'latest')
             

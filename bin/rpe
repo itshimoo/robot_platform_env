@@ -72,7 +72,7 @@ def run_command(config: ConfigManager, docker_mgr: DockerManager):
     success = docker_mgr.run_container()
     if success:
         print("✅ Container started successfully")
-        print(f"Container accessible on port {config.get('DOCKER_PORT', 8080)}")
+        print("Container accessible on port 8080")
         
         # Show GPU status if enabled
         if config.get('GPU_ENABLED', False):
@@ -364,9 +364,8 @@ def workspace_command(config: ConfigManager, docker_mgr: DockerManager, args):
         docker_mgr.stop_container()
         docker_mgr.remove_container()
     
-    # Update the workspace path in configuration
-    config.set('WORKSPACE_PATH', new_workspace)
-    config.save_config()
+    # Note: Workspace path is now hardcoded to /workspace
+    # The workspace is mounted from current directory to /workspace in container
     
     print(f"✅ Workspace path updated to: {new_workspace}")
     
@@ -381,7 +380,7 @@ def workspace_command(config: ConfigManager, docker_mgr: DockerManager, args):
     if success:
         print("✅ Container started successfully with new workspace!")
         print(f"📁 Workspace: {new_workspace}")
-        print(f"🔗 Container accessible on port {config.get('DOCKER_PORT', 8080)}")
+        print("🔗 Container accessible on port 8080")
     else:
         print("❌ Failed to start container with new workspace")
         return False
