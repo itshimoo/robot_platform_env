@@ -1,0 +1,124 @@
+---
+# r1 Machine Provisioning Playbook
+# Run on a fresh Ubuntu 24.04 machine to get dev-ready
+# Usage: ansible-playbook -i localhost, -c local ansible/setup.yml
+# Or on remote: ansible-playbook -i <host>, ansible/setup.yml
+
+- name: r1 dev machine setup
+  hosts: all
+  become: true
+  vars:
+    r1_user: "{{ ansible_user_id }}"
+    r1_home: "/home/{{ r1_user }}/r1"
+
+  tasks:
+    # ── System packages ──────────────────────────────────────────────────
+    - name: Install base packages
+      apt:
+        name:
+          - curl
+          - git
+          - build-essential
+          - ca-certificates
+          - gnupg
+          - lsb-release
+          - python3-pip
+          - xvfb                # headless display for sim
+          - udev
+        state: present
+        update_cache: true
+
+    # ── Docker ───────────────────────────────────────────────────────────
+    - name: Add Docker GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker apt repository
+      apt_repository:
+        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        state: present
+
+    - name: Install Docker Engine
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+        update_cache: true
+
+    - name: Add user to docker group
+      user:
+        name: "{{ r1_user }}"
+        groups: docker
+        append: true
+
+    # ── NVIDIA Container Toolkit (conditional) ────────────────────────────
+    - name: Check for NVIDIA GPU
+      command: nvidia-smi
+      register: nvidia_check
+      failed_when: false
+      changed_when: false
+
+    - name: Install NVIDIA Container Toolkit
+      when: nvidia_check.rc == 0
+      block:
+        - name: Add NVIDIA Container Toolkit repo
+          shell: |
+            curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey \
+              | gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+            curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list \
+              | sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' \
+              | tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+          args:
+            creates: /etc/apt/sources.list.d/nvidia-container-toolkit.list
+
+        - name: Install nvidia-container-toolkit
+          apt:
+            name: nvidia-container-toolkit
+            state: present
+            update_cache: true
+
+        - name: Configure Docker NVIDIA runtime
+          command: nvidia-ctk runtime configure --runtime=docker
+          notify: Restart Docker
+
+    # ── just ─────────────────────────────────────────────────────────────
+    - name: Install just
+      become_user: "{{ r1_user }}"
+      shell: |
+        curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh \
+          | bash -s -- --to /home/{{ r1_user }}/.local/bin
+      args:
+        creates: "/home/{{ r1_user }}/.local/bin/just"
+
+    # ── Pixi ─────────────────────────────────────────────────────────────
+    - name: Install pixi
+      become_user: "{{ r1_user }}"
+      shell: curl -fsSL https://pixi.sh/install.sh | bash
+      args:
+        creates: "/home/{{ r1_user }}/.pixi/bin/pixi"
+
+    # ── PATH setup ────────────────────────────────────────────────────────
+    - name: Ensure ~/.local/bin is on PATH in .bashrc
+      become_user: "{{ r1_user }}"
+      lineinfile:
+        path: "/home/{{ r1_user }}/.bashrc"
+        line: 'export PATH="$HOME/.local/bin:$HOME/.pixi/bin:$PATH"'
+        state: present
+
+    # ── Run r1 install.sh ────────────────────────────────────────────────
+    - name: Run r1 install.sh
+      become_user: "{{ r1_user }}"
+      shell: "bash {{ r1_home }}/install.sh"
+      args:
+        creates: "/home/{{ r1_user }}/.r1rc"
+
+  handlers:
+    - name: Restart Docker
+      service:
+        name: docker
+        state: restarted

@@ -1,0 +1,53 @@
+# Isaac Sim container — replaces Gazebo, same Zenoh interface
+name: r1-isaac
+
+services:
+  sim:
+    image: ${R1_ISAAC_IMAGE:-nvcr.io/nvidia/isaac-sim:4.5.0}
+    build:
+      dockerfile: docker/r1_isaac/Dockerfile
+      context: ..
+    container_name: r1_sim        # same name as Gazebo — r1-shell works identically
+    hostname: sim
+    runtime: nvidia               # Isaac Sim requires NVIDIA GPU always
+    networks:
+      - r1_net
+    ports:
+      - "7447:7447"               # Zenoh router
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      # Full src/ mount — robot-agnostic, Isaac reads whatever packages are in the workspace
+      - ${ROS_WS_PATH}/src:/workspace/ros2_ws/src:rw
+      # OV/Isaac cache — named volumes persist across restarts, never re-downloaded
+      - isaac_kit_cache:/isaac-sim/kit/cache
+      - isaac_ov_cache:/root/.cache/ov
+      - isaac_pip_cache:/root/.cache/pip
+      - isaac_glcache:/root/.cache/nvidia/GLCache
+      - isaac_computecache:/root/.nv/ComputeCache
+      - isaac_omni_logs:/root/.nvidia-omniverse/logs
+      - isaac_ov_data:/root/.local/share/ov/data
+      - ${ROS_WS_PATH}/logs:/logs
+    environment:
+      DISPLAY: ${DISPLAY:-:0}
+      ACCEPT_EULA: "Y"
+      PRIVACY_CONSENT: "Y"
+      RMW_IMPLEMENTATION: rmw_zenoh_cpp
+      ZENOH_CONFIG_OVERRIDE: ${ZENOH_CONFIG_OVERRIDE}
+      R1_ENABLE_ACL: ${R1_ENABLE_ACL:-false}
+      R1_SIM_PASSWD: ${R1_SIM_PASSWD:-CHANGE_ME}
+      PYTHONUNBUFFERED: "1"
+    entrypoint: ["/entrypoint.sh"]
+    restart: unless-stopped
+
+networks:
+  r1_net:
+    name: r1_net
+
+volumes:
+  isaac_kit_cache:
+  isaac_ov_cache:
+  isaac_pip_cache:
+  isaac_glcache:
+  isaac_computecache:
+  isaac_omni_logs:
+  isaac_ov_data:

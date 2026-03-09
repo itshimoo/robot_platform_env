@@ -1,0 +1,25 @@
+# ~/.r1rc — per-machine overrides
+# Copy to ~/.r1rc and edit. Never commit this file.
+# Sourced by every r1-* command at runtime.
+
+# Graphics backend: cuda (NVIDIA GPU) or mesa (no GPU / AMD)
+R1_GL=cuda
+
+# Environment: dev or prod
+R1_ENV=dev
+
+# Docker image tags (override to pin specific versions)
+# R1_SIM_IMAGE=ghcr.io/your-org/r1/r1-sim:latest
+# R1_ROBOT_IMAGE=ghcr.io/your-org/r1/r1-robot:latest
+
+# Zenoh security (set to true for deployment, false for local dev)
+R1_ENABLE_ACL=false
+R1_SIM_PASSWD=CHANGE_ME_BEFORE_DEPLOYMENT
+R1_ROBOT_PASSWD=CHANGE_ME_BEFORE_DEPLOYMENT
+
+# Zenoh router address (default: localhost:7447)
+# Change if sim is running on a different machine
+# R1_ROUTER_ADDR=192.168.1.50:7447
+
+# HuggingFace username for dataset push
+# HF_USER=your-hf-username

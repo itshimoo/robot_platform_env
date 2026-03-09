@@ -1,0 +1,85 @@
+# justfile — r1 Robotics Development Stack
+# Usage: just <recipe> [args]
+#
+#   just setup              one-time machine setup (Ansible)
+#   just install            one-time machine setup (bash fallback)
+#   just start              start Gazebo sim
+#   just start real         connect to real robot hardware
+#   just start isaac        start Isaac Sim backend
+#   just start isaac-lab    start Isaac Lab RL environment
+#   just stop               stop all r1 containers
+#   just shell              open bash in active sim container
+#   just shell "ros2 topic list"   run a command in the container
+#   just pull               pull latest images from registry
+#   just build              build shippable r1-robot image
+#   just build my-tag       build with a custom image tag
+#   just ws                 show workspace + container status
+
+set shell := ["bash", "-euo", "pipefail", "-c"]
+
+_r1  := justfile_directory() + "/r1"
+_lib := justfile_directory() + "/r1/lib/r1.bash"
+
+# ── One-time setup ─────────────────────────────────────────────────────────
+
+# Machine setup via Ansible (recommended)
+setup:
+    ansible-playbook -i localhost, -c local {{_r1}}/ansible/setup.yml
+
+# Machine setup via bash installer (no Ansible needed)
+install:
+    bash {{_r1}}/install.sh
+
+# ── Sim / Hardware ─────────────────────────────────────────────────────────
+
+# Start a backend: sim (default) | real | isaac | isaac-lab
+# Pass pull=true to pull the latest image first: just start real pull=true
+start backend="sim" pull="false":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    . "{{_lib}}"
+    load_r1rc
+    r1_start "{{backend}}" "{{pull}}"
+
+# Stop all running r1 containers
+stop:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    . "{{_lib}}"
+    load_r1rc
+    r1_stop
+
+# Open an interactive shell (or run a command) in the active sim container
+shell *args="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    . "{{_lib}}"
+    load_r1rc
+    r1_shell {{args}}
+
+# ── Image management ───────────────────────────────────────────────────────
+
+# Pull latest r1 images from the registry
+pull:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    . "{{_lib}}"
+    load_r1rc
+    r1_pull
+
+# Build the shippable r1-robot image (optionally pass a custom tag)
+build tag="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    . "{{_lib}}"
+    load_r1rc
+    r1_build "{{tag}}"
+
+# ── Workspace status ───────────────────────────────────────────────────────
+
+# Show workspace config and running container status
+ws:
+    #!/usr/bin/env bash
+    . "{{_lib}}"
+    load_r1rc
+    r1_ws

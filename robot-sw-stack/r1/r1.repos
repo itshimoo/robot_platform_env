@@ -1,0 +1,8 @@
+repositories:
+  # Add your ROS 2 workspace external dependencies here
+  # Format: https://github.com/dirk-thomas/vcstool
+  # Example:
+  # ros2/geometry2:
+  #   type: git
+  #   url: https://github.com/ros2/geometry2.git
+  #   version: kilted

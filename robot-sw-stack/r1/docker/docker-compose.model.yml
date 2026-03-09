@@ -1,0 +1,31 @@
+# r1-robot policy container — overlaid on any sim backend
+# Used for: r1-build validation, full integration test, submission
+name: r1-model
+
+services:
+  robot:
+    image: ${R1_ROBOT_IMAGE:-my-solution:latest}
+    build:
+      dockerfile: docker/r1_robot/Dockerfile
+      context: ..
+    container_name: r1_robot
+    runtime: ${DOCKER_RUNTIME:-runc}
+    networks:
+      - r1_net
+    volumes:
+      - ${ROS_WS_PATH}/datasets:/datasets
+      - ${ROS_WS_PATH}/logs:/logs
+    environment:
+      RMW_IMPLEMENTATION: rmw_zenoh_cpp
+      ZENOH_ROUTER_CHECK_ATTEMPTS: -1
+      R1_ROUTER_ADDR: sim:7447
+      ZENOH_CONFIG_OVERRIDE: ${ZENOH_CONFIG_OVERRIDE_ROBOT}
+      R1_ENABLE_ACL: ${R1_ENABLE_ACL:-false}
+      R1_ROBOT_PASSWD: ${R1_ROBOT_PASSWD:-CHANGE_ME}
+      POLICY: ${POLICY:-r1_policies.act.ACTPolicy}
+    command: ["--ros-args", "-p", "policy:=${POLICY:-r1_policies.act.ACTPolicy}"]
+
+networks:
+  r1_net:
+    external: true
+    name: r1_net

@@ -1,0 +1,35 @@
+# Gazebo Harmonic simulation + Zenoh router
+name: r1-sim
+
+services:
+  sim:
+    image: ${R1_SIM_IMAGE:-ghcr.io/your-org/r1/r1-sim:latest}
+    container_name: r1_sim
+    hostname: sim
+    init: true
+    runtime: ${DOCKER_RUNTIME:-runc}
+    networks:
+      - r1_net
+    ports:
+      - "7447:7447"           # Zenoh router — model container connects here
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      # Dev mode: live src/ edits reflected without rebuild (Section 12 Req 7)
+      # Comment out for runtime mode (src baked into image)
+      - ${ROS_WS_PATH}/src:/ros_ws/src:rw
+      - ${ROS_WS_PATH}/logs:/logs
+    environment:
+      DISPLAY: ${DISPLAY:-:0}
+      RMW_IMPLEMENTATION: rmw_zenoh_cpp
+      ZENOH_CONFIG_OVERRIDE: ${ZENOH_CONFIG_OVERRIDE}
+      R1_ENABLE_ACL: ${R1_ENABLE_ACL:-false}
+      R1_SIM_PASSWD: ${R1_SIM_PASSWD:-CHANGE_ME}
+      R1_ROBOT_PASSWD: ${R1_ROBOT_PASSWD:-CHANGE_ME}
+      MISO_LOGDIR: /logs
+    entrypoint: ["/entrypoint.sh"]
+    restart: unless-stopped
+    tty: true
+
+networks:
+  r1_net:
+    name: r1_net

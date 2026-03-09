@@ -1,0 +1,51 @@
+[workspace]
+name = "r1"
+channels = ["robostack-kilted", "conda-forge"]
+platforms = ["linux-64", "osx-arm64"]
+version = "0.1.0"
+conda-pypi-map = { "robostack-kilted" = "robostack_mapping.json" }
+preview = ["pixi-build"]
+
+# ── ROS 2 packages (from robostack-kilted conda channel) ──────────────────
+[dependencies]
+ros-kilted-ros-core = "*"
+ros-kilted-rclpy = "*"
+ros-kilted-rmw-zenoh-cpp = "*"
+ros-kilted-sensor-msgs = "*"
+ros-kilted-geometry-msgs = "*"
+ros-kilted-tf2-ros-py = "*"
+ros-kilted-control-msgs = "*"
+ros-kilted-std-msgs = "*"
+ros-kilted-std-srvs = "*"
+ros-kilted-moveit-msgs = "*"
+
+# ── Local workspace packages (built from source via pixi-build-ros) ────────
+# Uncomment and adjust paths when workspace packages are ready
+# ros-kilted-r1-interfaces = { path = "${ROS_WS_PATH}/src/r1_interfaces" }
+# ros-kilted-r1-model = { path = "${ROS_WS_PATH}/src/r1_model" }
+
+# ── Dev tools ─────────────────────────────────────────────────────────────
+isort = "==5.13.2"
+pyright = "==1.1.408"
+packaging = ">=24.2,<26.0"
+opencv = "<4.13.0"
+setuptools = ">=71.0.0,<81.0.0"
+
+# ── Hardware support ──────────────────────────────────────────────────────
+[target.linux-64.dependencies]
+evdev = ">=1.9.2,<2"          # SpaceMouse + gamepad input
+
+# ── ML / LeRobot (PyPI) ───────────────────────────────────────────────────
+[pypi-dependencies]
+lerobot = "==0.4.3"
+mujoco = "==3.5.0"
+huggingface-hub = { version = "==0.35.3", extras = ["hf-transfer", "cli"] }
+pynput = ">=1.7.6,<2"
+pyspacemouse = ">=2.0.0,<3"
+
+# LeRobot ↔ ROS 2 bridge (pinned git rev for reproducibility)
+lerobot_robot_ros = { git = "https://github.com/koonpeng/lerobot-ros", rev = "b4a635fc5264266bd1575f07d54be3d4bbd620e0", subdirectory = "lerobot_robot_ros" }
+
+# ── Environment activation ────────────────────────────────────────────────
+[activation]
+scripts = ["pixi_env_setup.sh"]
